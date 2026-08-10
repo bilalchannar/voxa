@@ -1,0 +1,87 @@
+rules_version = '2';
+
+// Voxa Firestore security rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- Helpers -----------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function createdAtImmutable() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['createdAt']);
+    }
+
+    function isParticipant(chat) {
+      return isSignedIn() && chat != null && request.auth.uid in chat.participants;
+    }
+
+    // ---- User profile ------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && createdAtImmutable();
+      allow delete: if false;
+
+      match /settings/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /{subCollection}/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ---- Chats -------------------------------------------------------------
+    match /chats/{chatId} {
+      allow read: if isParticipant(resource.data);
+      allow create: if isParticipant(request.resource.data);
+      allow update: if isParticipant(resource.data);
+      allow delete: if isParticipant(resource.data);
+
+      // ---- Messages --------------------------------------------------------
+      match /messages/{messageId} {
+        allow read: if isSignedIn()
+          && (isParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data)
+              || request.auth.uid == resource.data.senderId
+              || request.auth.uid == resource.data.receiverId);
+
+        allow create: if isSignedIn()
+          && request.auth.uid == request.resource.data.senderId;
+
+        allow update: if isSignedIn()
+          && (request.auth.uid == resource.data.senderId
+              || request.auth.uid == resource.data.receiverId
+              || isParticipant(get(/databases/$(database)/documents/chats/$(chatId)).data));
+
+        allow delete: if false;
+      }
+    }
+
+    // ---- Calls -------------------------------------------------------------
+    match /calls/{callId} {
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId
+            || request.auth.uid == resource.data.receiverId);
+
+      allow create: if isSignedIn()
+        && request.auth.uid == request.resource.data.callerId;
+
+      allow update: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId
+            || request.auth.uid == resource.data.receiverId);
+
+      allow delete: if isSignedIn()
+        && (request.auth.uid == resource.data.callerId
+            || request.auth.uid == resource.data.receiverId);
+    }
+
+    // Everything else is denied by default
+  }
+}
