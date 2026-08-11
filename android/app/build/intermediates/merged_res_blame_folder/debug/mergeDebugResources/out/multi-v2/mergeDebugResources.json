@@ -2307,23 +2307,6 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\de44463c0afd70ce25f3bfe353fd85a5\\workspace\\transformed\\iris-rtc-4.5.3-build.1\\res\\values\\values.xml",
-                    "from": {
-                        "startLines": "2",
-                        "startColumns": "4",
-                        "startOffsets": "55",
-                        "endColumns": "51",
-                        "endOffsets": "102"
-                    },
-                    "to": {
-                        "startLines": "178",
-                        "startColumns": "4",
-                        "startOffsets": "9515",
-                        "endColumns": "51",
-                        "endOffsets": "9562"
-                    }
-                },
-                {
                     "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\f1860b13508327b74303593a23c6563d\\workspace\\transformed\\navigationevent\\res\\values\\values.xml",
                     "from": {
                         "startLines": "2",
@@ -2408,6 +2391,23 @@
                         "startOffsets": "3286,3375,3446,5091,5144,5197,5250,9068,14310,14486,14608,14795,14989",
                         "endColumns": "88,70,72,52,52,52,52,59,65,121,60,65,66",
                         "endOffsets": "3370,3441,3514,5139,5192,5245,5298,9123,14371,14603,14664,14856,15051"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\c0fc3bdcc90255b4401d8a6d88114ddf\\workspace\\transformed\\iris-rtc-4.3.2-build.1\\res\\values\\values.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "51",
+                        "endOffsets": "102"
+                    },
+                    "to": {
+                        "startLines": "178",
+                        "startColumns": "4",
+                        "startOffsets": "9515",
+                        "endColumns": "51",
+                        "endOffsets": "9562"
                     }
                 },
                 {
