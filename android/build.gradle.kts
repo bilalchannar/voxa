@@ -19,10 +19,13 @@ subprojects {
             val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
             android.compileSdkVersion(36)
             android.defaultConfig.minSdkVersion(23)
-
+            if (android.namespace == null) {
+                android.namespace = "com.plugin.${project.name.replace('-', '_')}"
+            }
         }
     }
 }
+
 
 
 
