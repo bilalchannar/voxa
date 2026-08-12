@@ -1,10 +1,20 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.voxa.app-mergeDebugResources-18:/values-km/values-km.xml",
+            "outputFile": "com.example.voxa.app-mergeDebugResources-19:/values-km/values-km.xml",
             "map": [
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\fc3bd9b0ce5db7ea9844121a738e970b\\workspace\\transformed\\core-1.18.0\\res\\values-km\\values-km.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\61db7bc03daae1bd4ff403f246fab600\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-km\\values-km.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,171",
+                        "endColumns": "115,116",
+                        "endOffsets": "166,283"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\dd837bc22efbedc2d9cd1b21f62dadf0\\workspace\\transformed\\core-1.18.0\\res\\values-km\\values-km.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -21,24 +31,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\6593c68aa15dc93e0555c0d8aaef2602\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-km\\values.xml",
-                    "from": {
-                        "startLines": "4",
-                        "startColumns": "0",
-                        "startOffsets": "218",
-                        "endColumns": "144",
-                        "endOffsets": "362"
-                    },
-                    "to": {
-                        "startLines": "19",
-                        "startColumns": "4",
-                        "startOffsets": "2008",
-                        "endColumns": "148",
-                        "endOffsets": "2152"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\4f1f9676a323cc88b85a7bad42cde900\\workspace\\transformed\\browser-1.9.0\\res\\values-km\\values-km.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\15b54511f5ff1e484f7251dfa05cab7b\\workspace\\transformed\\browser-1.9.0\\res\\values-km\\values-km.xml",
                     "from": {
                         "startLines": "2,3,4,5",
                         "startColumns": "4,4,4,4",
@@ -55,17 +48,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ef855c0f9c5fbb5d4a6c247d8ae658ae\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-km\\values-km.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,171",
-                        "endColumns": "115,116",
-                        "endOffsets": "166,283"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\3801d88333d7118d4f239a5294e16ec0\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-km\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ee61aa28c02439f1ec89fcdea831eca7\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-km\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -79,6 +62,23 @@
                         "startOffsets": "1009,1111,1266,1387,1492,1654,1778,1899,2157,2315,2432,2603,2728,2873,3031,3095,3153",
                         "endColumns": "101,154,120,104,161,123,120,108,157,116,170,124,144,157,63,57,76",
                         "endOffsets": "1106,1261,1382,1487,1649,1773,1894,2003,2310,2427,2598,2723,2868,3026,3090,3148,3225"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\750dc250c303227fc116cbf900315c97\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-km\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "218",
+                        "endColumns": "144",
+                        "endOffsets": "362"
+                    },
+                    "to": {
+                        "startLines": "19",
+                        "startColumns": "4",
+                        "startOffsets": "2008",
+                        "endColumns": "148",
+                        "endOffsets": "2152"
                     }
                 }
             ]

@@ -1,10 +1,37 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.voxa.app-mergeDebugResources-18:/values-mr/values-mr.xml",
+            "outputFile": "com.example.voxa.app-mergeDebugResources-19:/values-mr/values-mr.xml",
             "map": [
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\3801d88333d7118d4f239a5294e16ec0\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-mr\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\15b54511f5ff1e484f7251dfa05cab7b\\workspace\\transformed\\browser-1.9.0\\res\\values-mr\\values-mr.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,156,257,368",
+                        "endColumns": "100,100,110,101",
+                        "endOffsets": "151,252,363,465"
+                    },
+                    "to": {
+                        "startLines": "29,30,31,32",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "3169,3270,3371,3482",
+                        "endColumns": "100,100,110,101",
+                        "endOffsets": "3265,3366,3477,3579"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\61db7bc03daae1bd4ff403f246fab600\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-mr\\values-mr.xml",
+                    "from": {
+                        "startLines": "2,3",
+                        "startColumns": "4,4",
+                        "startOffsets": "55,166",
+                        "endColumns": "110,111",
+                        "endOffsets": "161,273"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ee61aa28c02439f1ec89fcdea831eca7\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-mr\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -21,34 +48,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ef855c0f9c5fbb5d4a6c247d8ae658ae\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-mr\\values-mr.xml",
-                    "from": {
-                        "startLines": "2,3",
-                        "startColumns": "4,4",
-                        "startOffsets": "55,166",
-                        "endColumns": "110,111",
-                        "endOffsets": "161,273"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\fc3bd9b0ce5db7ea9844121a738e970b\\workspace\\transformed\\core-1.18.0\\res\\values-mr\\values-mr.xml",
-                    "from": {
-                        "startLines": "2,3,4,5,6,7,8,9",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "55,155,259,360,463,565,670,787",
-                        "endColumns": "99,103,100,102,101,104,116,100",
-                        "endOffsets": "150,254,355,458,560,665,782,883"
-                    },
-                    "to": {
-                        "startLines": "4,5,6,7,8,9,10,33",
-                        "startColumns": "4,4,4,4,4,4,4,4",
-                        "startOffsets": "278,378,482,583,686,788,893,3584",
-                        "endColumns": "99,103,100,102,101,104,116,100",
-                        "endOffsets": "373,477,578,681,783,888,1005,3680"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\6593c68aa15dc93e0555c0d8aaef2602\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-mr\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\750dc250c303227fc116cbf900315c97\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-mr\\values.xml",
                     "from": {
                         "startLines": "4",
                         "startColumns": "0",
@@ -65,20 +65,20 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\4f1f9676a323cc88b85a7bad42cde900\\workspace\\transformed\\browser-1.9.0\\res\\values-mr\\values-mr.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\dd837bc22efbedc2d9cd1b21f62dadf0\\workspace\\transformed\\core-1.18.0\\res\\values-mr\\values-mr.xml",
                     "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "55,156,257,368",
-                        "endColumns": "100,100,110,101",
-                        "endOffsets": "151,252,363,465"
+                        "startLines": "2,3,4,5,6,7,8,9",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "55,155,259,360,463,565,670,787",
+                        "endColumns": "99,103,100,102,101,104,116,100",
+                        "endOffsets": "150,254,355,458,560,665,782,883"
                     },
                     "to": {
-                        "startLines": "29,30,31,32",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "3169,3270,3371,3482",
-                        "endColumns": "100,100,110,101",
-                        "endOffsets": "3265,3366,3477,3579"
+                        "startLines": "4,5,6,7,8,9,10,33",
+                        "startColumns": "4,4,4,4,4,4,4,4",
+                        "startOffsets": "278,378,482,583,686,788,893,3584",
+                        "endColumns": "99,103,100,102,101,104,116,100",
+                        "endOffsets": "373,477,578,681,783,888,1005,3680"
                     }
                 }
             ]

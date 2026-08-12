@@ -1,10 +1,21 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.voxa.app-mergeDebugResources-18:/values-v21/values-v21.xml",
+            "outputFile": "com.example.voxa.app-mergeDebugResources-19:/values-v21/values-v21.xml",
             "map": [
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\2eed6d4b0e92dbcdf653c94ab4edc516\\workspace\\transformed\\credentials-play-services-auth-1.2.0-rc01\\res\\values-v21\\values-v21.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\12f1596c8740f2fbd550aeb373ac5aeb\\workspace\\transformed\\media-1.1.0\\res\\values-v21\\values-v21.xml",
+                    "from": {
+                        "startLines": "2,5,8,11",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,223,386,554",
+                        "endLines": "4,7,10,13",
+                        "endColumns": "12,12,12,12",
+                        "endOffsets": "218,381,549,716"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\23829daffe0a6f7ab84f73f67e9e8754\\workspace\\transformed\\credentials-play-services-auth-1.2.0-rc01\\res\\values-v21\\values-v21.xml",
                     "from": {
                         "startLines": "2",
                         "startColumns": "4",
@@ -20,17 +31,6 @@
                         "endLines": "21",
                         "endColumns": "12",
                         "endOffsets": "1209"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\9c7c8878ec96c472b5a030e016b1ed47\\workspace\\transformed\\media-1.1.0\\res\\values-v21\\values-v21.xml",
-                    "from": {
-                        "startLines": "2,5,8,11",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "55,223,386,554",
-                        "endLines": "4,7,10,13",
-                        "endColumns": "12,12,12,12",
-                        "endOffsets": "218,381,549,716"
                     }
                 }
             ]

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.voxa.app-mergeDebugResources-18:/values-night-v8/values-night-v8.xml",
+            "outputFile": "com.example.voxa.app-mergeDebugResources-19:/values-night-v8/values-night-v8.xml",
             "map": [
                 {
                     "source": "D:\\FlutterProjects\\voxa\\android\\app\\src\\main\\res\\values-night\\styles.xml",

@@ -1,44 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.voxa.app-mergeDebugResources-18:/values-si/values-si.xml",
+            "outputFile": "com.example.voxa.app-mergeDebugResources-19:/values-si/values-si.xml",
             "map": [
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\4f1f9676a323cc88b85a7bad42cde900\\workspace\\transformed\\browser-1.9.0\\res\\values-si\\values-si.xml",
-                    "from": {
-                        "startLines": "2,3,4,5",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "55,163,270,386",
-                        "endColumns": "107,106,115,104",
-                        "endOffsets": "158,265,381,486"
-                    },
-                    "to": {
-                        "startLines": "29,30,31,32",
-                        "startColumns": "4,4,4,4",
-                        "startOffsets": "3201,3309,3416,3532",
-                        "endColumns": "107,106,115,104",
-                        "endOffsets": "3304,3411,3527,3632"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\6593c68aa15dc93e0555c0d8aaef2602\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-si\\values.xml",
-                    "from": {
-                        "startLines": "4",
-                        "startColumns": "0",
-                        "startOffsets": "218",
-                        "endColumns": "134",
-                        "endOffsets": "352"
-                    },
-                    "to": {
-                        "startLines": "19",
-                        "startColumns": "4",
-                        "startOffsets": "1990",
-                        "endColumns": "138",
-                        "endOffsets": "2124"
-                    }
-                },
-                {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ef855c0f9c5fbb5d4a6c247d8ae658ae\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-si\\values-si.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\61db7bc03daae1bd4ff403f246fab600\\workspace\\transformed\\credentials-1.2.0-rc01\\res\\values-si\\values-si.xml",
                     "from": {
                         "startLines": "2,3",
                         "startColumns": "4,4",
@@ -48,7 +14,7 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\fc3bd9b0ce5db7ea9844121a738e970b\\workspace\\transformed\\core-1.18.0\\res\\values-si\\values-si.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\dd837bc22efbedc2d9cd1b21f62dadf0\\workspace\\transformed\\core-1.18.0\\res\\values-si\\values-si.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9",
                         "startColumns": "4,4,4,4,4,4,4,4",
@@ -65,7 +31,24 @@
                     }
                 },
                 {
-                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\3801d88333d7118d4f239a5294e16ec0\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-si\\values.xml",
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\750dc250c303227fc116cbf900315c97\\workspace\\transformed\\play-services-basement-18.9.0\\res\\values-si\\values.xml",
+                    "from": {
+                        "startLines": "4",
+                        "startColumns": "0",
+                        "startOffsets": "218",
+                        "endColumns": "134",
+                        "endOffsets": "352"
+                    },
+                    "to": {
+                        "startLines": "19",
+                        "startColumns": "4",
+                        "startOffsets": "1990",
+                        "endColumns": "138",
+                        "endOffsets": "2124"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\ee61aa28c02439f1ec89fcdea831eca7\\workspace\\transformed\\play-services-base-18.9.0\\res\\values-si\\values.xml",
                     "from": {
                         "startLines": "4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20",
                         "startColumns": "0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",
@@ -79,6 +62,23 @@
                         "startOffsets": "1011,1119,1273,1397,1510,1652,1776,1892,2129,2280,2395,2551,2682,2826,2987,3060,3121",
                         "endColumns": "107,153,123,112,141,123,115,97,150,114,155,130,143,160,72,60,79",
                         "endOffsets": "1114,1268,1392,1505,1647,1771,1887,1985,2275,2390,2546,2677,2821,2982,3055,3116,3196"
+                    }
+                },
+                {
+                    "source": "D:\\GradleCache\\caches\\9.1.0\\transforms\\15b54511f5ff1e484f7251dfa05cab7b\\workspace\\transformed\\browser-1.9.0\\res\\values-si\\values-si.xml",
+                    "from": {
+                        "startLines": "2,3,4,5",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "55,163,270,386",
+                        "endColumns": "107,106,115,104",
+                        "endOffsets": "158,265,381,486"
+                    },
+                    "to": {
+                        "startLines": "29,30,31,32",
+                        "startColumns": "4,4,4,4",
+                        "startOffsets": "3201,3309,3416,3532",
+                        "endColumns": "107,106,115,104",
+                        "endOffsets": "3304,3411,3527,3632"
                     }
                 }
             ]
