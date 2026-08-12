@@ -19,6 +19,22 @@ class CallsView extends StatefulWidget {
 class _CallsViewState extends State<CallsView> {
   final CallService _callService = CallService.instance;
   final FirebaseService _firebaseService = FirebaseService();
+  Set<String> _contactUids = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContacts();
+  }
+
+  Future<void> _loadContacts() async {
+    try {
+      final contacts = await _firebaseService.getContactUids();
+      if (mounted) setState(() => _contactUids = contacts);
+    } catch (_) {
+      // Non-fatal: without contacts, "contacts"-only photos stay hidden.
+    }
+  }
 
   Future<void> _redialCall(CallModel call, String currentUid) async {
     final caller = await _firebaseService.getUserProfile();
@@ -176,49 +192,79 @@ class _CallsViewState extends State<CallsView> {
               statusColor = Colors.blue;
             }
 
-            final name = call.otherName(currentUid);
-            final photo = call.otherPhoto(currentUid);
-            final initial = name.isNotEmpty ? name[0].toUpperCase() : 'V';
+            final targetUid = call.otherUid(currentUid);
+            final fallbackName = call.otherName(currentUid);
+            final fallbackPhoto = call.otherPhoto(currentUid);
 
-            return ListTile(
-              onTap: () => _redialCall(call, currentUid),
-              onLongPress: () => _confirmDeleteCall(call),
-              leading: ProfileAvatar(
-                photoUrl: photo,
-                initial: initial,
-                radius: 24,
-              ),
-              title: Text(
-                name,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: isMissed ? AppColors.danger : AppColors.primaryText,
-                ),
-              ),
-              subtitle: Row(
-                children: [
-                  Icon(statusIcon, size: 16, color: statusColor),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      '${_formatTimestamp(call.timestamp)}${_formatDuration(call.duration)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppColors.secondaryText,
+            return StreamBuilder<UserProfile?>(
+              stream: _firebaseService.profileStream(uid: targetUid),
+              builder: (context, profileSnap) {
+                final user = profileSnap.data;
+                final displayName = user?.displayName ?? fallbackName;
+                final photoUrl = user?.photoUrl ?? fallbackPhoto;
+                final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'V';
+
+                return Dismissible(
+                  key: Key(call.callId),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) async {
+                    await _callService.deleteCallHistoryItem(call.callId);
+                    if (mounted) {
+                      VoxaSnackBar.success(context, 'Call log deleted.');
+                    }
+                  },
+                  background: Container(
+                    color: AppColors.danger,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  child: ListTile(
+                    onTap: () => _redialCall(call, currentUid),
+                    onLongPress: () => _confirmDeleteCall(call),
+                    leading: ProfileAvatar(
+                      photoUrl: user?.canSeePhoto(currentUid,
+                                  viewerContacts: _contactUids) ==
+                              true
+                          ? photoUrl
+                          : null,
+                      initial: initial,
+                      radius: 24,
+                    ),
+                    title: Text(
+                      displayName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: isMissed ? AppColors.danger : AppColors.primaryText,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Row(
+                      children: [
+                        Icon(statusIcon, size: 16, color: statusColor),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${_formatTimestamp(call.timestamp)}${_formatDuration(call.duration)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: AppColors.secondaryText,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(
+                        call.isVideoCall ? Icons.videocam : Icons.phone,
+                        color: AppColors.secondary,
+                      ),
+                      onPressed: () => _redialCall(call, currentUid),
                     ),
                   ),
-                ],
-              ),
-              trailing: IconButton(
-                icon: Icon(
-                  call.isVideoCall ? Icons.videocam : Icons.phone,
-                  color: AppColors.secondary,
-                ),
-                onPressed: () => _redialCall(call, currentUid),
-              ),
+                );
+              },
             );
           },
         );

@@ -7,6 +7,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../models/call_model.dart';
 import '../../models/user_profile.dart';
 import '../config/agora_config.dart';
+import 'firebase_service.dart';
 
 class CallService {
   static final CallService instance = CallService._internal();
@@ -15,8 +16,13 @@ class CallService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseService _firebaseService = FirebaseService();
 
   String get currentUid => _auth.currentUser?.uid ?? '';
+
+  Stream<UserProfile?> profileStream({String? uid}) {
+    return _firebaseService.profileStream(uid: uid);
+  }
 
   Future<CallModel?> makeCall({
     required UserProfile receiver,
@@ -33,7 +39,7 @@ class CallService {
         receiverId: receiver.uid,
         receiverName: receiver.displayName,
         receiverPhoto: receiver.photoUrl,
-        channelId: docRef.id,
+        channelId: 'test', // TEMPORARY: Hardcoded for token testing
         status: 'dialing',
         isVideoCall: isVideoCall,
         timestamp: DateTime.now(),

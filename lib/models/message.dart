@@ -17,6 +17,7 @@ class Message {
   final String? replyToSender;
   final bool isEdited;
   final bool isDeleted;
+  final bool isPending;
   final List<String> deletedFor;
   final List<String> starredBy;
   final Map<String, String> reactions;
@@ -38,6 +39,7 @@ class Message {
     this.replyToSender,
     this.isEdited = false,
     this.isDeleted = false,
+    this.isPending = false,
     this.deletedFor = const [],
     this.starredBy = const [],
     this.reactions = const {},
@@ -65,6 +67,7 @@ class Message {
       replyToSender: data['replyToSender'] as String?,
       isEdited: (data['isEdited'] as bool?) ?? false,
       isDeleted: (data['isDeleted'] as bool?) ?? false,
+      isPending: doc.metadata.hasPendingWrites,
       deletedFor: List<String>.from(data['deletedFor'] as List? ?? []),
       starredBy: List<String>.from(data['starredBy'] as List? ?? []),
       reactions: data['reactions'] is Map<String, dynamic>

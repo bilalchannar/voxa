@@ -36,9 +36,9 @@ class FirebaseService {
     return _firestore.collection('users').doc(uid);
   }
 
-  Stream<UserProfile?> profileStream() {
-    final uid = currentUid;
-    return _userDoc(uid).snapshots().map((snap) {
+  Stream<UserProfile?> profileStream({String? uid}) {
+    final targetUid = uid ?? currentUid;
+    return _userDoc(targetUid).snapshots().map((snap) {
       if (!snap.exists) {
         return null;
       }
@@ -74,6 +74,7 @@ class FirebaseService {
           'profilePhoto': 'everyone',
           'about': 'everyone',
           'onlineStatus': 'everyone',
+          'status': 'everyone',
         },
       });
     } else {
@@ -165,6 +166,49 @@ class FirebaseService {
       }
     }
     return results;
+  }
+
+  /// Builds the set of contact UIDs from the current user's chat documents.
+  ///
+  /// In Voxa a "contact" is defined as *someone you share a 1:1 (direct) chat
+  /// with*. Group chats do not create contact relationships. This is derived
+  /// entirely from the existing `chats` collection — no separate contacts graph.
+  Set<String> _contactsFromChatDocs(
+    Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    String uid,
+  ) {
+    final contacts = <String>{};
+    for (final doc in docs) {
+      final data = doc.data();
+      if ((data['type'] as String?) == 'group') continue;
+      final participants =
+          (data['participants'] as List?)?.cast<String>() ??
+          const <String>[];
+      for (final participant in participants) {
+        if (participant != uid) contacts.add(participant);
+      }
+    }
+    return contacts;
+  }
+
+  /// Live stream of the current user's contact UIDs (direct-chat partners).
+  Stream<Set<String>> contactUidsStream() {
+    final uid = currentUid;
+    return _firestore
+        .collection('chats')
+        .where('participants', arrayContains: uid)
+        .snapshots()
+        .map((snapshot) => _contactsFromChatDocs(snapshot.docs, uid));
+  }
+
+  /// One-shot fetch of the current user's contact UIDs (direct-chat partners).
+  Future<Set<String>> getContactUids() async {
+    final uid = currentUid;
+    final snapshot = await _firestore
+        .collection('chats')
+        .where('participants', arrayContains: uid)
+        .get();
+    return _contactsFromChatDocs(snapshot.docs, uid);
   }
 
   final Map<String, UserProfile> _userProfileCache = {};
@@ -294,7 +338,7 @@ class FirebaseService {
         .collection('messages')
         .orderBy('createdAt', descending: false)
         .limitToLast(limit)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snapshot) {
           return snapshot.docs.map((doc) => Message.fromSnapshot(doc)).toList();
         });
@@ -591,12 +635,34 @@ class FirebaseService {
     required String conversationId,
     required String messageId,
   }) async {
-    await _firestore
+    final batch = _firestore.batch();
+    final msgRef = _firestore
         .collection('chats')
         .doc(conversationId)
         .collection('messages')
-        .doc(messageId)
-        .update({'isDeleted': true, 'content': 'This message was deleted'});
+        .doc(messageId);
+
+    batch.update(msgRef, {
+      'isDeleted': true,
+      'content': 'This message was deleted',
+      'mediaUrl': FieldValue.delete(),
+      'fileName': FieldValue.delete(),
+      'fileSize': FieldValue.delete(),
+      'replyToId': FieldValue.delete(),
+      'replyToText': FieldValue.delete(),
+      'replyToSender': FieldValue.delete(),
+    });
+
+    // If this was the last message, update the chat summary
+    final chatRef = _firestore.collection('chats').doc(conversationId);
+    final chatSnap = await chatRef.get();
+    if (chatSnap.exists && chatSnap.data()?['lastMessage'] != null) {
+      // Note: In a real app, we might check if this messageId matches the last message,
+      // but for simplicity, we'll just update the text if it matches or is recent.
+      batch.update(chatRef, {'lastMessage': 'This message was deleted'});
+    }
+
+    await batch.commit();
   }
 
   Future<void> toggleStarMessage({

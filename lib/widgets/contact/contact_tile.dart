@@ -8,26 +8,45 @@ class ContactTile extends StatelessWidget {
   final UserProfile user;
   final VoidCallback onTap;
   final bool isMe;
+  final String? currentUid;
+  final Set<String> viewerContacts;
 
   const ContactTile({
     super.key,
     required this.user,
     required this.onTap,
     this.isMe = false,
+    this.currentUid,
+    this.viewerContacts = const <String>{},
   });
+
+  String _subtitle() {
+    if (isMe) return 'Message yourself';
+    if (user.phoneNumber.isNotEmpty) return user.phoneNumber;
+    // "About" respects the owner's About privacy setting.
+    if (user.canSeeAbout(currentUid, viewerContacts: viewerContacts)) {
+      return user.about;
+    }
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final showOnlineDot =
+        user.canSeeOnlineStatus(currentUid, viewerContacts: viewerContacts) &&
+        user.isOnline;
     return ListTile(
       onTap: onTap,
       leading: Stack(
         children: [
           ProfileAvatar(
-            photoUrl: user.photoUrl,
+            photoUrl: user.canSeePhoto(currentUid, viewerContacts: viewerContacts)
+                ? user.photoUrl
+                : null,
             initial: user.initial,
             radius: 24,
           ),
-          if (user.isOnline)
+          if (showOnlineDot)
             Positioned(
               right: 0,
               bottom: 0,
@@ -48,9 +67,7 @@ class ContactTile extends StatelessWidget {
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        isMe
-            ? 'Message yourself'
-            : (user.phoneNumber.isNotEmpty ? user.phoneNumber : user.about),
+        _subtitle(),
         style: const TextStyle(fontSize: 13.5, color: AppColors.secondaryText),
       ),
       trailing: const Icon(

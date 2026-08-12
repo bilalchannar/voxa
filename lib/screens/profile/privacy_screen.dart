@@ -164,6 +164,9 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
           final onlineStatus = PrivacyVisibility.fromString(
             privacyMap['onlineStatus'] as String?,
           );
+          final status = PrivacyVisibility.fromString(
+            privacyMap['status'] as String?,
+          );
 
           return ListView(
             children: [
@@ -221,6 +224,17 @@ class _PrivacyScreenState extends State<PrivacyScreen> {
                   field: 'onlineStatus',
                   title: 'Who can see when I am online',
                   current: onlineStatus,
+                ),
+              ),
+              const SettingsDivider(indent: 56),
+              SettingsTile(
+                icon: Icons.donut_large,
+                title: 'Status',
+                trailing: _trailingFor('status', status),
+                onTap: () => _edit(
+                  field: 'status',
+                  title: 'Who can see my status updates',
+                  current: status,
                 ),
               ),
             ],

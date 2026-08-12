@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/services/media_saver_service.dart';
+import '../../core/services/settings_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/message.dart';
+import '../../screens/chat/video_player_screen.dart';
 import 'voice_message_bubble.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -10,6 +13,7 @@ class MessageBubble extends StatelessWidget {
   final bool isMe;
   final String currentUid;
   final bool isSelected;
+  final double fontSize;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
@@ -19,6 +23,7 @@ class MessageBubble extends StatelessWidget {
     required this.isMe,
     required this.currentUid,
     this.isSelected = false,
+    this.fontSize = 15,
     this.onTap,
     this.onLongPress,
   });
@@ -56,6 +61,40 @@ class MessageBubble extends StatelessWidget {
     }
   }
 
+  Future<void> _saveMedia(
+    BuildContext context, {
+    required String? url,
+    required bool isVideo,
+  }) async {
+    if (url == null || url.isEmpty) return;
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Saving media...')),
+    );
+
+    // The "Media visibility" chat setting decides where the file lands:
+    // gallery (visible) vs the app's private storage (hidden from gallery).
+    final settings = await SettingsService().getChats();
+    final result = await const MediaSaverService().saveFromUrl(
+      url: url,
+      mediaVisible: settings.mediaVisibility,
+      isVideo: isVideo,
+    );
+
+    messenger.hideCurrentSnackBar();
+    final String text;
+    if (result.success) {
+      text = result.location == MediaSaveLocation.gallery
+          ? 'Saved to gallery'
+          : 'Saved to app (hidden from gallery — Media visibility is off)';
+    } else if (result.error == 'permission-denied') {
+      text = 'Gallery permission denied. Enable it in Settings to save.';
+    } else {
+      text = 'Could not save media. Please try again.';
+    }
+    messenger.showSnackBar(SnackBar(content: Text(text)));
+  }
+
   void _showImageViewer(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
@@ -86,6 +125,19 @@ class MessageBubble extends StatelessWidget {
               child: IconButton(
                 icon: const Icon(Icons.close, color: Colors.white, size: 28),
                 onPressed: () => Navigator.pop(ctx),
+              ),
+            ),
+            Positioned(
+              top: 40,
+              left: 16,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.download_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                tooltip: 'Save to gallery',
+                onPressed: () => _saveMedia(ctx, url: imageUrl, isVideo: false),
               ),
             ),
           ],
@@ -159,6 +211,28 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildMediaContent(BuildContext context) {
+    if (message.isDeleted) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.block,
+            size: 14,
+            color: AppColors.secondaryText,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'This message was deleted',
+            style: TextStyle(
+              fontSize: fontSize - 1,
+              fontStyle: FontStyle.italic,
+              color: isMe ? Colors.white70 : AppColors.secondaryText,
+            ),
+          ),
+        ],
+      );
+    }
+
     final mediaUrl = message.mediaUrl ?? '';
 
     switch (message.type) {
@@ -206,7 +280,10 @@ class MessageBubble extends StatelessWidget {
             if (message.content.isNotEmpty &&
                 message.content != '📷 Photo') ...[
               const SizedBox(height: 6),
-              Text(message.content, style: const TextStyle(fontSize: 14)),
+              Text(
+                message.content,
+                style: TextStyle(fontSize: fontSize - 1),
+              ),
             ],
           ],
         );
@@ -216,7 +293,20 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             GestureDetector(
-              onTap: () => _openMediaUrl(context, mediaUrl),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => VideoPlayerScreen(
+                      url: mediaUrl,
+                      title: message.content.isNotEmpty &&
+                              message.content != '🎥 Video'
+                          ? message.content
+                          : 'Video',
+                    ),
+                  ),
+                );
+              },
               child: Container(
                 width: 220,
                 height: 140,
@@ -261,7 +351,10 @@ class MessageBubble extends StatelessWidget {
             if (message.content.isNotEmpty &&
                 message.content != '🎥 Video') ...[
               const SizedBox(height: 6),
-              Text(message.content, style: const TextStyle(fontSize: 14)),
+              Text(
+                message.content,
+                style: TextStyle(fontSize: fontSize - 1),
+              ),
             ],
           ],
         );
@@ -294,9 +387,9 @@ class MessageBubble extends StatelessWidget {
                         message.fileName ?? 'Document',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: fontSize - 1,
                         ),
                       ),
                       if (message.fileSize != null)
@@ -327,12 +420,7 @@ class MessageBubble extends StatelessWidget {
       default:
         return Text(
           message.content,
-          style: TextStyle(
-            fontSize: 15,
-            height: 1.3,
-            fontStyle: message.isDeleted ? FontStyle.italic : FontStyle.normal,
-            color: message.isDeleted ? AppColors.secondaryText : null,
-          ),
+          style: TextStyle(fontSize: fontSize, height: 1.3),
         );
     }
   }
@@ -388,7 +476,8 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment:
+                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildReplySnippet(),
@@ -396,12 +485,12 @@ class MessageBubble extends StatelessWidget {
                 style: TextStyle(color: textColor),
                 child: _buildMediaContent(context),
               ),
-              _buildReactions(),
+              if (!message.isDeleted) _buildReactions(),
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (message.isEdited) ...[
+                  if (message.isEdited && !message.isDeleted) ...[
                     const Text(
                       'edited ',
                       style: TextStyle(
@@ -411,7 +500,7 @@ class MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (isStarred) ...[
+                  if (isStarred && !message.isDeleted) ...[
                     const Icon(Icons.star, size: 12, color: Colors.amber),
                     const SizedBox(width: 4),
                   ],
@@ -424,15 +513,22 @@ class MessageBubble extends StatelessWidget {
                       fontSize: 11,
                     ),
                   ),
-                  if (isMe) ...[
+                  if (isMe && !message.isDeleted) ...[
                     const SizedBox(width: 4),
-                    Icon(
-                      message.status == 'seen' ? Icons.done_all : Icons.done,
-                      size: 15,
-                      color: message.status == 'seen'
-                          ? Colors.blue
-                          : AppColors.secondaryText,
-                    ),
+                    if (message.isPending)
+                      const Icon(
+                        Icons.access_time,
+                        size: 13,
+                        color: AppColors.secondaryText,
+                      )
+                    else
+                      Icon(
+                        message.status == 'seen' ? Icons.done_all : Icons.done,
+                        size: 15,
+                        color: message.status == 'seen'
+                            ? Colors.blue
+                            : AppColors.secondaryText,
+                      ),
                   ],
                 ],
               ),

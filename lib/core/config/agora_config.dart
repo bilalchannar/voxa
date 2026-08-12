@@ -4,7 +4,7 @@ class AgoraConfig {
   static const String appId = '47594fae25564287b018d28545e788c7';
 
   static const String devToken =
-      '007eJxTYLD7LPTXkPtNAu/vR32Ne6dmrgpkbt4U+0ZdXCfav9U9tkWBwcTc1NIkLTHVyNTUzMTIwjzJwNAixcjC1MQ01dzCItk87EdVVkMgI4N10woGRigE8VkYwvIrEhkYAO6JHcg=';
+      '007eJxTYNh0aHeTXzeLbNzxgAd3eX62r1aKzO1Myz9WzXxexEuq66QCg4m5qaVJWmKqkampmYmRhXmSgaFFipGFqYlpqrmFRbJ5S1hNVkMgI4ON2CNmRgYIBPFZGEpSi0sYGAAB9x3J';
 
 
   static bool get isConfigured =>

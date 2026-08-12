@@ -1,12 +1,15 @@
 import 'dart:async';
 
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/config/agora_config.dart';
 import '../../core/services/call_service.dart';
+import '../../core/services/firebase_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/call_model.dart';
+import '../../models/user_profile.dart';
 import '../../widgets/profile/profile_avatar.dart';
 
 class CallScreen extends StatefulWidget {
@@ -21,10 +24,14 @@ class CallScreen extends StatefulWidget {
 
 class _CallScreenState extends State<CallScreen> {
   final CallService _callService = CallService.instance;
+  final FirebaseService _firebaseService = FirebaseService();
+  Set<String> _contactUids = {};
 
   RtcEngine? _engine;
   StreamSubscription<CallModel?>? _callSub;
+  StreamSubscription<UserProfile?>? _recipientSub;
   Timer? _durationTimer;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _isMuted = false;
   bool _isSpeakerOn = false;
@@ -38,11 +45,65 @@ class _CallScreenState extends State<CallScreen> {
   void initState() {
     super.initState();
     final callType = widget.call.isVideoCall ? 'video' : 'voice';
-    _statusText = widget.isIncoming
-        ? 'Incoming $callType call...'
-        : 'Ringing...';
+    _statusText = widget.isIncoming ? 'Incoming $callType call...' : 'Calling...';
     _initCallSession();
     _listenToCallState();
+    _loadContacts();
+    if (!widget.isIncoming) {
+      _listenToRecipientStatus();
+    }
+  }
+
+  Future<void> _loadContacts() async {
+    try {
+      final contacts = await _firebaseService.getContactUids();
+      if (mounted) setState(() => _contactUids = contacts);
+    } catch (_) {
+      // Non-fatal: without contacts, "contacts"-only photo stays hidden.
+    }
+  }
+
+  void _listenToRecipientStatus() {
+    final recipientUid = widget.call.receiverId;
+    _recipientSub = _callService.profileStream(uid: recipientUid).listen((user) {
+      if (!mounted || user == null || _isConnected) return;
+
+      // Respect the callee's online-status privacy: if they don't expose
+      // presence to me, never surface it via the "Ringing..." state either.
+      final presenceVisible = user.canSeeOnlineStatus(
+        _callService.currentUid,
+        viewerContacts: _contactUids,
+      );
+
+      if (presenceVisible && user.isOnline) {
+        if (_statusText != 'Ringing...') {
+          setState(() => _statusText = 'Ringing...');
+          _playRingingSound();
+        }
+      } else {
+        if (_statusText != 'Calling...') {
+          setState(() => _statusText = 'Calling...');
+          _stopRingingSound();
+        }
+      }
+    });
+  }
+
+  Future<void> _playRingingSound() async {
+    try {
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+      await _audioPlayer.play(AssetSource('sounds/ringing.mp3'));
+    } catch (e) {
+      debugPrint('[CallScreen] Error playing sound: $e');
+    }
+  }
+
+  Future<void> _stopRingingSound() async {
+    try {
+      await _audioPlayer.stop();
+    } catch (e) {
+      debugPrint('[CallScreen] Error stopping sound: $e');
+    }
   }
 
   Future<void> _initCallSession() async {
@@ -118,6 +179,7 @@ class _CallScreenState extends State<CallScreen> {
 
   void _onCallConnected() {
     if (_isConnected) return;
+    _stopRingingSound();
     setState(() {
       _isConnected = true;
       _statusText = 'Connected';
@@ -141,21 +203,26 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Future<void> _handleReject() async {
+    _stopRingingSound();
     await _callService.rejectCall(widget.call.callId);
     _handleEndCall();
   }
 
   Future<void> _handleEndCall() async {
+    _stopRingingSound();
     _durationTimer?.cancel();
     _callSub?.cancel();
+    _recipientSub?.cancel();
     await _callService.endCall(widget.call.callId, duration: _seconds);
     await _callService.leaveChannel(_engine);
     if (mounted) Navigator.pop(context);
   }
 
   void _closeScreenWithDelay() {
+    _stopRingingSound();
     _durationTimer?.cancel();
     _callSub?.cancel();
+    _recipientSub?.cancel();
     Future.delayed(const Duration(seconds: 1), () async {
       await _callService.leaveChannel(_engine);
       if (mounted) Navigator.pop(context);
@@ -190,8 +257,11 @@ class _CallScreenState extends State<CallScreen> {
 
   @override
   void dispose() {
+    _stopRingingSound();
+    _audioPlayer.dispose();
     _durationTimer?.cancel();
     _callSub?.cancel();
+    _recipientSub?.cancel();
     _callService.leaveChannel(_engine);
     super.dispose();
   }
@@ -203,6 +273,11 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   Widget _buildRemoteVideo() {
+    final isMeCaller = !widget.isIncoming;
+    final targetUid = isMeCaller ? widget.call.receiverId : widget.call.callerId;
+    final fallbackName = isMeCaller ? widget.call.receiverName : widget.call.callerName;
+    final fallbackPhoto = isMeCaller ? widget.call.receiverPhoto : widget.call.callerPhoto;
+
     if (_engine != null && _remoteUid != null && widget.call.isVideoCall) {
       return AgoraVideoView(
         controller: VideoViewController.remote(
@@ -213,29 +288,35 @@ class _CallScreenState extends State<CallScreen> {
       );
     }
 
-    final isMeCaller = !widget.isIncoming;
-    final displayName = isMeCaller
-        ? widget.call.receiverName
-        : widget.call.callerName;
-    final photoUrl = isMeCaller
-        ? widget.call.receiverPhoto
-        : widget.call.callerPhoto;
-    final initial = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'V';
+    return StreamBuilder<UserProfile?>(
+      stream: _callService.profileStream(uid: targetUid),
+      builder: (context, snapshot) {
+        final user = snapshot.data;
+        final displayName = user?.displayName ?? fallbackName;
+        final photoUrl = user?.canSeePhoto(_callService.currentUid,
+                    viewerContacts: _contactUids) ==
+                true
+            ? (user?.photoUrl ?? fallbackPhoto)
+            : null;
+        final initial =
+            displayName.isNotEmpty ? displayName[0].toUpperCase() : 'V';
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ProfileAvatar(photoUrl: photoUrl, initial: initial, radius: 64),
-        const SizedBox(height: 16),
-        Text(
-          displayName,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ],
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ProfileAvatar(photoUrl: photoUrl, initial: initial, radius: 64),
+            const SizedBox(height: 16),
+            Text(
+              displayName,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -266,9 +347,8 @@ class _CallScreenState extends State<CallScreen> {
   @override
   Widget build(BuildContext context) {
     final isMeCaller = !widget.isIncoming;
-    final displayName = isMeCaller
-        ? widget.call.receiverName
-        : widget.call.callerName;
+    final targetUid = isMeCaller ? widget.call.receiverId : widget.call.callerId;
+    final fallbackName = isMeCaller ? widget.call.receiverName : widget.call.callerName;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111D25),
@@ -280,30 +360,36 @@ class _CallScreenState extends State<CallScreen> {
             Positioned(
               top: 32,
               left: 20,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _isConnected ? _formattedTimer : _statusText,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: _isConnected ? AppColors.accent : Colors.white70,
-                      shadows: const [
-                        Shadow(blurRadius: 4, color: Colors.black),
-                      ],
-                    ),
-                  ),
-                ],
+              child: StreamBuilder<UserProfile?>(
+                stream: _callService.profileStream(uid: targetUid),
+                builder: (context, snapshot) {
+                  final displayName = snapshot.data?.displayName ?? fallbackName;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        displayName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _isConnected ? _formattedTimer : _statusText,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: _isConnected ? AppColors.accent : Colors.white70,
+                          shadows: const [
+                            Shadow(blurRadius: 4, color: Colors.black),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
             Positioned(

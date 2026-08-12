@@ -17,6 +17,7 @@ class ChatListItem extends StatelessWidget {
   final MessageStatus status;
   final MessageType type;
   final Color avatarColor;
+  final bool isPinned;
   final VoidCallback onTap;
 
   const ChatListItem({
@@ -30,6 +31,7 @@ class ChatListItem extends StatelessWidget {
     this.status = MessageStatus.none,
     this.type = MessageType.text,
     required this.avatarColor,
+    this.isPinned = false,
     required this.onTap,
   });
 
@@ -131,6 +133,15 @@ class ChatListItem extends StatelessWidget {
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
+                          ),
+                        )
+                      else if (isPinned)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: Icon(
+                            Icons.push_pin,
+                            size: 16,
+                            color: Color(0xFF667781),
                           ),
                         ),
                     ],

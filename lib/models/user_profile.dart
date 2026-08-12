@@ -82,29 +82,60 @@ class UserProfile {
     return photoUrl != null && photoUrl!.isNotEmpty;
   }
 
-  bool canSeeLastSeen([String? viewerUid]) {
+  /// Core privacy resolver.
+  ///
+  /// Each privacy field is one of `everyone` | `contacts` | `nobody`:
+  /// - `nobody`   → never visible to anyone but the owner.
+  /// - `contacts` → visible only when the viewer is a contact of the owner.
+  ///   Voxa has no address-book graph, so "contact" means *someone you share a
+  ///   1:1 chat with*. That relationship is symmetric, so the viewer can decide
+  ///   visibility from their own contact set: the owner is visible iff the
+  ///   owner's uid is in the viewer's contacts (`viewerContacts.contains(uid)`).
+  /// - `everyone` → always visible (also the default when unset/unknown).
+  ///
+  /// The owner can always see their own information.
+  bool _visibleTo(
+    String settingKey,
+    String? viewerUid,
+    Set<String> viewerContacts,
+  ) {
     if (viewerUid != null && viewerUid == uid) return true;
-    final setting = privacy['lastSeen'] as String? ?? 'everyone';
-    return setting != 'nobody';
+    final setting = privacy[settingKey] as String? ?? 'everyone';
+    switch (setting) {
+      case 'nobody':
+        return false;
+      case 'contacts':
+        return viewerContacts.contains(uid);
+      case 'everyone':
+      default:
+        return true;
+    }
   }
 
-  bool canSeePhoto([String? viewerUid]) {
-    if (viewerUid != null && viewerUid == uid) return true;
-    final setting = privacy['profilePhoto'] as String? ?? 'everyone';
-    return setting != 'nobody';
-  }
+  bool canSeeLastSeen(
+    String? viewerUid, {
+    Set<String> viewerContacts = const <String>{},
+  }) => _visibleTo('lastSeen', viewerUid, viewerContacts);
 
-  bool canSeeAbout([String? viewerUid]) {
-    if (viewerUid != null && viewerUid == uid) return true;
-    final setting = privacy['about'] as String? ?? 'everyone';
-    return setting != 'nobody';
-  }
+  bool canSeePhoto(
+    String? viewerUid, {
+    Set<String> viewerContacts = const <String>{},
+  }) => _visibleTo('profilePhoto', viewerUid, viewerContacts);
 
-  bool canSeeOnlineStatus([String? viewerUid]) {
-    if (viewerUid != null && viewerUid == uid) return true;
-    final setting = privacy['onlineStatus'] as String? ?? 'everyone';
-    return setting != 'nobody';
-  }
+  bool canSeeAbout(
+    String? viewerUid, {
+    Set<String> viewerContacts = const <String>{},
+  }) => _visibleTo('about', viewerUid, viewerContacts);
+
+  bool canSeeOnlineStatus(
+    String? viewerUid, {
+    Set<String> viewerContacts = const <String>{},
+  }) => _visibleTo('onlineStatus', viewerUid, viewerContacts);
+
+  bool canSeeStatus(
+    String? viewerUid, {
+    Set<String> viewerContacts = const <String>{},
+  }) => _visibleTo('status', viewerUid, viewerContacts);
 
   static DateTime? _parseDate(dynamic value) {
     if (value is Timestamp) {

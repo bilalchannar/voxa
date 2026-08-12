@@ -60,7 +60,7 @@ class CloudinaryService {
       throw const CloudinaryNotConfiguredException();
     }
 
-    final typeEndpoint = (resourceType == 'video')
+    final typeEndpoint = (resourceType == 'video' || resourceType == 'voice' || resourceType == 'audio')
         ? 'video'
         : (resourceType == 'document' ? 'raw' : 'image');
 

@@ -48,8 +48,7 @@ service cloud.firestore {
 
       // ---- Messages --------------------------------------------------------
       match /messages/{messageId} {
-        allow read, create, update: if isSignedIn();
-        allow delete: if false;
+        allow read, create, update, delete: if isSignedIn();
       }
     }
 
@@ -69,6 +68,28 @@ service cloud.firestore {
       allow delete: if isSignedIn()
         && (request.auth.uid == resource.data.callerId
             || request.auth.uid == resource.data.receiverId);
+    }
+
+    // ---- Status ------------------------------------------------------------
+    match /status/{statusId} {
+      // NOTE: reads stay open to any signed-in user on purpose. Status privacy
+      // ('everyone' | 'contacts' | 'nobody') is enforced client-side because
+      // the feed query orders ALL statuses by timestamp; filtering reads in
+      // rules would require reshaping that query + composite indexes (out of
+      // scope here). This tightens the WRITE side only, which is always safe.
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && (!('privacy' in request.resource.data)
+            || request.resource.data.privacy in ['everyone', 'contacts', 'nobody']);
+      allow update: if isSignedIn()
+        && (
+          (resource.data.uid == request.auth.uid
+            && (!('privacy' in request.resource.data)
+                || request.resource.data.privacy in ['everyone', 'contacts', 'nobody']))
+          || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewers'])
+        );
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
     // Everything else is denied by default

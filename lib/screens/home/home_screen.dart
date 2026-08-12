@@ -14,6 +14,10 @@ import 'package:voxa/screens/group/create_group_screen.dart';
 import 'package:voxa/screens/profile/profile_screen.dart';
 import 'package:voxa/widgets/call/calls_view.dart';
 import 'package:voxa/widgets/chat/chats_view.dart';
+import 'package:voxa/widgets/status/status_view.dart';
+import '../../core/services/cloudinary_service.dart';
+import '../../core/services/status_service.dart';
+import '../../core/utils/voxa_snackbar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -361,154 +365,331 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showStarredMessagesModal() {
+    // ... existing implementation ...
+  }
+
+  Future<void> _pickAndUploadStatus({bool isVideo = false}) async {
+    final picker = ImagePicker();
+    XFile? file;
+    if (isVideo) {
+      file = await picker.pickVideo(source: ImageSource.gallery);
+    } else {
+      file = await picker.pickImage(source: ImageSource.gallery);
+    }
+
+    if (file == null) return;
+    if (!mounted) return;
+    _showStatusConfirmDialog(File(file.path), isVideo ? 'video' : 'image');
+  }
+
+  void _showStatusConfirmDialog(File file, String type) {
+    final captionController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Post ${type == 'video' ? 'Video' : 'Image'} Status'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (type == 'image')
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(file, height: 200, fit: BoxFit.cover),
+              )
+            else
+              const Icon(Icons.videocam, size: 64, color: AppColors.secondary),
+            TextField(
+              controller: captionController,
+              decoration: const InputDecoration(hintText: 'Add a caption...'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              _handleStatusUpload(file, captionController.text.trim(), type);
+            },
+            child: const Text('Post'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleStatusUpload(File file, String caption, String type) async {
+    try {
+      VoxaSnackBar.show(
+        context,
+        message: 'Uploading status...',
+        icon: Icons.cloud_upload_outlined,
+      );
+
+      final imageUrl = await const CloudinaryService().uploadMediaFile(
+        file: file,
+        resourceType: type,
+      );
+
+      final user = await _firebaseService.getUserProfile();
+      if (user == null) return;
+
+      final privacy = user.privacy['status'] as String? ?? 'everyone';
+
+      await StatusService.instance.uploadStatus(
+        imageUrl: imageUrl,
+        caption: caption,
+        displayName: user.displayName,
+        profilePhoto: user.photoUrl,
+        type: type,
+        privacy: privacy,
+      );
+
+      if (!mounted) return;
+      VoxaSnackBar.success(context, 'Status uploaded!');
+    } catch (e) {
+      if (!mounted) return;
+      VoxaSnackBar.error(context, 'Failed to upload status.');
+    }
+  }
+
+  void _showTextStatusModal() {
+    final textController = TextEditingController();
+    int currentBgColor = Colors.teal.value;
+    final List<int> bgColors = [
+      Colors.teal.value,
+      Colors.blueGrey.value,
+      Colors.purple.value,
+      Colors.pink.value,
+      Colors.orange.value,
+      Colors.blue.value,
+      Colors.brown.value,
+    ];
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Container(
+              height: MediaQuery.of(context).size.height,
+              color: Color(currentBgColor),
+              padding: const EdgeInsets.all(32),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.star, color: Colors.amber, size: 28),
-                      SizedBox(width: 10),
-                      Text(
-                        'Starred Messages',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Center(
-                    child: Column(
+                  SafeArea(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SizedBox(height: 20),
-                        Icon(Icons.star_outline, size: 48, color: AppColors.secondaryText),
-                        SizedBox(height: 12),
-                        Text(
-                          'Tap and hold on any message in a chat to star it for easy access later.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.secondaryText, fontSize: 13.5),
+                        IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
                         ),
-                        SizedBox(height: 20),
+                        IconButton(
+                          icon: const Icon(Icons.palette, color: Colors.white),
+                          onPressed: () {
+                            setModalState(() {
+                              final nextIndex = (bgColors.indexOf(currentBgColor) + 1) % bgColors.length;
+                              currentBgColor = bgColors[nextIndex];
+                            });
+                          },
+                        ),
                       ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: TextField(
+                        controller: textController,
+                        autofocus: true,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        decoration: const InputDecoration(
+                          hintText: 'Type a status',
+                          hintStyle: TextStyle(color: Colors.white54),
+                          border: InputBorder.none,
+                        ),
+                        maxLines: null,
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: FloatingActionButton(
+                      onPressed: () async {
+                        final text = textController.text.trim();
+                        if (text.isNotEmpty) {
+                          Navigator.pop(context);
+                          _handleTextStatusUpload(text, currentBgColor);
+                        }
+                      },
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.send, color: Color(currentBgColor)),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
+  }
+
+  Future<void> _handleTextStatusUpload(String text, int bgColor) async {
+    try {
+      VoxaSnackBar.show(
+        context,
+        message: 'Uploading status...',
+        icon: Icons.cloud_upload_outlined,
+      );
+
+      final user = await _firebaseService.getUserProfile();
+      if (user == null) return;
+
+      final privacy = user.privacy['status'] as String? ?? 'everyone';
+
+      await StatusService.instance.uploadStatus(
+        type: 'text',
+        text: text,
+        backgroundColor: bgColor,
+        displayName: user.displayName,
+        profilePhoto: user.photoUrl,
+        privacy: privacy,
+      );
+
+      if (!mounted) return;
+      VoxaSnackBar.success(context, 'Status uploaded!');
+    } catch (e) {
+      if (!mounted) return;
+      VoxaSnackBar.error(context, 'Failed to upload status.');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       ChatsView(searchQuery: _searchQuery),
-      const Center(child: Text("Updates")),
-      const Center(child: Text("Communities")),
+      const StatusView(),
       const CallsView(),
+      const ProfileScreen(),
     ];
 
+    final String appBarTitle;
+    switch (_selectedIndex) {
+      case 0:
+        appBarTitle = 'Voxa';
+        break;
+      case 1:
+        appBarTitle = 'Status';
+        break;
+      case 2:
+        appBarTitle = 'Calls';
+        break;
+      case 3:
+        appBarTitle = 'Profile';
+        break;
+      default:
+        appBarTitle = 'Voxa';
+    }
+
     return Scaffold(
-      appBar: AppBar(
-        leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _stopSearch,
-              )
-            : null,
-        title: _isSearching
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: const TextStyle(fontSize: 18),
-                decoration: const InputDecoration(
-                  hintText: 'Search chats...',
-                  border: InputBorder.none,
-                ),
-              )
-            : const Text(
-                "Voxa",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-        actions: _isSearching
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() => _searchQuery = '');
-                  },
-                ),
-              ]
-            : [
-                IconButton(
-                  icon: const Icon(Icons.camera_alt_outlined),
-                  onPressed: _openCamera,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: _startSearch,
-                ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: (value) {
-                    if (value == 'New group') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateGroupScreen(),
-                        ),
-                      );
-                    } else if (value == 'New broadcast') {
-                      _showBroadcastModal();
-                    } else if (value == 'Linked devices') {
-                      _showLinkedDevicesModal();
-                    } else if (value == 'Starred messages') {
-                      _showStarredMessagesModal();
-                    } else if (value == 'Profile' || value == 'Settings') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ProfileScreen(),
-                        ),
-                      );
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'New group',
-                      child: Text('New group'),
+      appBar: _selectedIndex == 3
+          ? null
+          : AppBar(
+              leading: _isSearching
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: _stopSearch,
+                    )
+                  : null,
+              title: _isSearching
+                  ? TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      style: const TextStyle(fontSize: 18),
+                      decoration: const InputDecoration(
+                        hintText: 'Search chats...',
+                        border: InputBorder.none,
+                      ),
+                    )
+                  : Text(
+                      appBarTitle,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    const PopupMenuItem(
-                      value: 'New broadcast',
-                      child: Text('New broadcast'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'Linked devices',
-                      child: Text('Linked devices'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'Starred messages',
-                      child: Text('Starred messages'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'Profile',
-                      child: Text('Profile'),
-                    ),
-                  ],
-                ),
-              ],
-      ),
+              actions: _isSearching
+                  ? [
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      ),
+                    ]
+                  : [
+                      IconButton(
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        onPressed: _openCamera,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: _startSearch,
+                      ),
+                      PopupMenuButton<String>(
+                        icon: const Icon(Icons.more_vert),
+                        onSelected: (value) {
+                          if (value == 'New group') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateGroupScreen(),
+                              ),
+                            );
+                          } else if (value == 'New broadcast') {
+                            _showBroadcastModal();
+                          } else if (value == 'Linked devices') {
+                            _showLinkedDevicesModal();
+                          } else if (value == 'Starred messages') {
+                            _showStarredMessagesModal();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'New group',
+                            child: Text('New group'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'New broadcast',
+                            child: Text('New broadcast'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'Linked devices',
+                            child: Text('Linked devices'),
+                          ),
+                          const PopupMenuItem(
+                            value: 'Starred messages',
+                            child: Text('Starred messages'),
+                          ),
+                        ],
+                      ),
+                    ],
+            ),
       body: pages[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
@@ -524,19 +705,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             label: "Chats",
           ),
           NavigationDestination(
-            icon: Icon(Icons.update_outlined),
-            selectedIcon: Icon(Icons.update),
-            label: "Updates",
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.groups_outlined),
-            selectedIcon: Icon(Icons.groups),
-            label: "Communities",
+            icon: Icon(Icons.circle_outlined),
+            selectedIcon: Icon(Icons.circle),
+            label: "Status",
           ),
           NavigationDestination(
             icon: Icon(Icons.call_outlined),
             selectedIcon: Icon(Icons.call),
             label: "Calls",
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: "Profile",
           ),
         ],
       ),
@@ -550,7 +731,55 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               backgroundColor: AppColors.accent,
               child: const Icon(Icons.message, color: Colors.white),
             )
-          : null,
+          : (_selectedIndex == 1
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FloatingActionButton.small(
+                      heroTag: 'edit_status',
+                      onPressed: () {
+                        _showTextStatusModal();
+                      },
+                      backgroundColor: Theme.of(context).cardColor,
+                      child: const Icon(Icons.edit, color: AppColors.secondary),
+                    ),
+                    const SizedBox(height: 12),
+                    FloatingActionButton(
+                      heroTag: 'camera_status',
+                      onPressed: () {
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) => SafeArea(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.image),
+                                  title: const Text('Image Status'),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _pickAndUploadStatus(isVideo: false);
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.videocam),
+                                  title: const Text('Video Status'),
+                                  onTap: () {
+                                    Navigator.pop(context);
+                                    _pickAndUploadStatus(isVideo: true);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                      backgroundColor: AppColors.accent,
+                      child: const Icon(Icons.camera_alt, color: Colors.white),
+                    ),
+                  ],
+                )
+              : null),
     );
   }
 }

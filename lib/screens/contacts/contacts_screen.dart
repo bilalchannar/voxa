@@ -189,6 +189,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
                       return ContactTile(
                         user: user,
                         isMe: isMe,
+                        currentUid: _viewModel.currentUid,
+                        viewerContacts: _viewModel.contactUids,
                         onTap: () => _handleSelectUser(user),
                       );
                     },

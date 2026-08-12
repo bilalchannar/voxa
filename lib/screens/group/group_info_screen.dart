@@ -20,6 +20,7 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
   final FirebaseService _firebaseService = FirebaseService();
 
   List<UserProfile> _members = [];
+  Set<String> _contactUids = {};
   bool _isLoading = true;
 
   @override
@@ -35,9 +36,11 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
           .first;
       final conv = Conversation.fromSnapshot(chatSnap);
       final members = await _firebaseService.getUsersByIds(conv.participants);
+      final contacts = await _firebaseService.getContactUids();
       if (mounted) {
         setState(() {
           _members = members;
+          _contactUids = contacts;
           _isLoading = false;
         });
       }
@@ -121,7 +124,11 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                               });
                             },
                             secondary: ProfileAvatar(
-                              photoUrl: user.photoUrl,
+                              photoUrl: user.canSeePhoto(
+                                      _firebaseService.currentUid,
+                                      viewerContacts: _contactUids)
+                                  ? user.photoUrl
+                                  : null,
                               initial: user.initial,
                               radius: 18,
                             ),
@@ -346,7 +353,11 @@ class _GroupInfoScreenState extends State<GroupInfoScreen> {
                               isMeAdmin: isMeAdmin,
                             ),
                             leading: ProfileAvatar(
-                              photoUrl: member.photoUrl,
+                              photoUrl: member.canSeePhoto(
+                                      currentUid,
+                                      viewerContacts: _contactUids)
+                                  ? member.photoUrl
+                                  : null,
                               initial: member.initial,
                               radius: 20,
                             ),

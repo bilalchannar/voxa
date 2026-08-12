@@ -7,6 +7,8 @@ import '../../viewmodels/chat_list_viewmodel.dart';
 import '../../screens/chat/chat_screen.dart';
 import '../../widgets/chat/chat_filter_chip.dart';
 import '../../widgets/chat/chat_list_item.dart';
+import '../../screens/chat/archived_chats_screen.dart';
+import '../../core/utils/voxa_snackbar.dart';
 
 class ChatsView extends StatefulWidget {
   final String searchQuery;
@@ -204,7 +206,18 @@ class _ChatsViewState extends State<ChatsView> {
               final uid = _viewModel.currentUid;
               final allChats = snapshot.data!;
 
-              final filteredChats = allChats.where((chat) {
+              // Every 1:1 chat partner is, by definition, a contact of the
+              // current user. Used to resolve "My Contacts" privacy locally.
+              final contactUids = allChats
+                  .where((chat) => !chat.isGroup)
+                  .map((chat) => chat.otherUser?.uid)
+                  .whereType<String>()
+                  .toSet();
+
+              final archivedChats = allChats.where((chat) => chat.isArchivedFor(uid)).toList();
+              final activeChats = allChats.where((chat) => !chat.isArchivedFor(uid)).toList();
+
+              final filteredChats = activeChats.where((chat) {
                 if (widget.searchQuery.isNotEmpty) {
                   final isGroup = chat.isGroup;
                   final otherUser = chat.otherUser;
@@ -225,7 +238,7 @@ class _ChatsViewState extends State<ChatsView> {
                 return true;
               }).toList();
 
-              if (filteredChats.isEmpty) {
+              if (filteredChats.isEmpty && archivedChats.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
@@ -262,11 +275,35 @@ class _ChatsViewState extends State<ChatsView> {
               }
 
               return ListView.separated(
-                itemCount: filteredChats.length,
+                itemCount: filteredChats.length + (archivedChats.isNotEmpty ? 1 : 0),
                 separatorBuilder: (context, index) =>
                     const Divider(height: 1, indent: 85, endIndent: 16),
                 itemBuilder: (context, index) {
-                  final chat = filteredChats[index];
+                  if (archivedChats.isNotEmpty && index == 0) {
+                    return ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ArchivedChatsScreen()),
+                        );
+                      },
+                      leading: const SizedBox(
+                        width: 54,
+                        child: Icon(Icons.archive_outlined, color: AppColors.secondary),
+                      ),
+                      title: const Text(
+                        'Archived',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      trailing: Text(
+                        '${archivedChats.length}',
+                        style: const TextStyle(color: AppColors.accent, fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
+
+                  final chatIndex = archivedChats.isNotEmpty ? index - 1 : index;
+                  final chat = filteredChats[chatIndex];
                   final isGroup = chat.isGroup;
                   final otherUser = chat.otherUser;
 
@@ -275,50 +312,124 @@ class _ChatsViewState extends State<ChatsView> {
                       : (otherUser?.displayName ?? 'Voxa User');
                   final photoUrl = isGroup
                       ? chat.groupPhoto
-                      : otherUser?.photoUrl;
+                      : (otherUser?.canSeePhoto(uid, viewerContacts: contactUids) == true
+                          ? otherUser?.photoUrl
+                          : null);
                   final isOnline = isGroup
                       ? false
-                      : (otherUser?.isOnline ?? false);
+                      : (otherUser != null &&
+                          otherUser.canSeeOnlineStatus(uid,
+                              viewerContacts: contactUids) &&
+                          otherUser.isOnline);
                   final unreadCount = chat.unreadCountFor(uid);
 
-                  return GestureDetector(
-                    onLongPress: () => _showContextMenu(context, chat),
-                    child: ChatListItem(
-                      name: name,
-                      avatarUrl: photoUrl,
-                      lastMessage: chat.lastMessage.isNotEmpty
-                          ? chat.lastMessage
-                          : 'Tap to start chat',
-                      time: _formatTime(chat.lastMessageTime ?? chat.updatedAt),
-                      unreadCount: unreadCount,
-                      isOnline: isOnline,
-                      status: MessageStatus.none,
-                      type: MessageType.text,
-                      avatarColor: AppColors.secondary,
-                      onTap: () {
-                        final recipient = isGroup
-                            ? UserProfile(
-                                uid: chat.id,
-                                phoneNumber: '',
-                                displayName: name,
-                                photoUrl: photoUrl,
-                                about: chat.groupDescription ?? '',
-                                isOnline: true,
-                              )
-                            : otherUser;
+                  final isPinned = chat.isPinnedFor(uid);
 
-                        if (recipient == null) return;
-
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => ChatScreen(
-                              conversationId: chat.id,
-                              recipient: recipient,
-                              isGroup: isGroup,
+                  return Dismissible(
+                    key: Key(chat.id),
+                    direction: DismissDirection.horizontal,
+                    confirmDismiss: (direction) async {
+                      if (direction == DismissDirection.startToEnd) {
+                        // Pin/Unpin action
+                        _viewModel.pinChat(chat.id, !isPinned);
+                        return false; // Don't dismiss
+                      } else {
+                        // Archive action
+                        _viewModel.archiveChat(chat.id, !chat.isArchivedFor(uid));
+                        VoxaSnackBar.success(
+                          context,
+                          chat.isArchivedFor(uid)
+                              ? 'Chat unarchived'
+                              : 'Chat archived',
+                        );
+                        return true; // Dismiss to hide from main list
+                      }
+                    },
+                    background: Container(
+                      color: AppColors.accent,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isPinned ? Icons.push_pin_outlined : Icons.push_pin,
+                            color: Colors.white,
+                          ),
+                          Text(
+                            isPinned ? 'Unpin' : 'Pin',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
                             ),
                           ),
-                        );
-                      },
+                        ],
+                      ),
+                    ),
+                    secondaryBackground: Container(
+                      color: AppColors.accent,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            chat.isArchivedFor(uid)
+                                ? Icons.unarchive_outlined
+                                : Icons.archive_outlined,
+                            color: Colors.white,
+                          ),
+                          Text(
+                            chat.isArchivedFor(uid) ? 'Unarchive' : 'Archive',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    child: GestureDetector(
+                      onLongPress: () => _showContextMenu(context, chat),
+                      child: ChatListItem(
+                        name: name,
+                        avatarUrl: photoUrl,
+                        lastMessage: chat.lastMessage.isNotEmpty
+                            ? chat.lastMessage
+                            : 'Tap to start chat',
+                        time:
+                            _formatTime(chat.lastMessageTime ?? chat.updatedAt),
+                        unreadCount: unreadCount,
+                        isOnline: isOnline,
+                        status: MessageStatus.none,
+                        type: MessageType.text,
+                        avatarColor: AppColors.secondary,
+                        isPinned: isPinned,
+                        onTap: () {
+                          final recipient = isGroup
+                              ? UserProfile(
+                                  uid: chat.id,
+                                  phoneNumber: '',
+                                  displayName: name,
+                                  photoUrl: photoUrl,
+                                  about: chat.groupDescription ?? '',
+                                  isOnline: true,
+                                )
+                              : otherUser;
+
+                          if (recipient == null) return;
+
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(
+                                conversationId: chat.id,
+                                recipient: recipient,
+                                isGroup: isGroup,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   );
                 },

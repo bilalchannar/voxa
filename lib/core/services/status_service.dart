@@ -13,18 +13,26 @@ class StatusService {
   String get _uid => _auth.currentUser?.uid ?? '';
 
   Future<void> uploadStatus({
-    required String imageUrl,
+    String? imageUrl,
+    String? text,
+    int? backgroundColor,
     String? caption,
     required String displayName,
     String? profilePhoto,
+    String type = 'image',
+    String privacy = 'everyone',
   }) async {
     try {
       await _firestore.collection('status').add({
         'uid': _uid,
         'displayName': displayName,
         'profilePhoto': profilePhoto,
+        'type': type,
         'imageUrl': imageUrl,
+        'text': text,
+        'backgroundColor': backgroundColor,
         'caption': caption,
+        'privacy': privacy,
         'timestamp': FieldValue.serverTimestamp(),
         'viewers': [],
       });
@@ -34,16 +42,21 @@ class StatusService {
   }
 
   Stream<List<StatusModel>> getStatuses() {
-    final twentyFourHoursAgo = DateTime.now().subtract(const Duration(hours: 24));
-    
     return _firestore
         .collection('status')
-        .where('timestamp', isGreaterThan: twentyFourHoursAgo)
         .orderBy('timestamp', descending: true)
-        .snapshots()
+        .snapshots(includeMetadataChanges: true)
         .map((snap) {
-          return snap.docs.map((doc) => StatusModel.fromSnapshot(doc)).toList();
-        });
+      final now = DateTime.now();
+      final twentyFourHoursAgo = now.subtract(const Duration(hours: 24));
+
+      return snap.docs.map((doc) {
+        return StatusModel.fromSnapshot(doc);
+      }).where((status) {
+        // If timestamp is null (pending write), treat it as recent
+        return status.timestamp.isAfter(twentyFourHoursAgo);
+      }).toList();
+    });
   }
 
   Future<void> markStatusAsViewed(String statusId) async {

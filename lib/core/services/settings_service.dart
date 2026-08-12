@@ -56,6 +56,15 @@ class SettingsService {
     await _settingsDoc('chats').set(settings.toMap());
   }
 
+  Future<ChatSettings> getChats() async {
+    try {
+      final snap = await _settingsDoc('chats').get();
+      return ChatSettings.fromMap(snap.data());
+    } catch (_) {
+      return const ChatSettings();
+    }
+  }
+
   Stream<StorageSettings> storageStream() {
     return _settingsDoc('storage')
         .snapshots()

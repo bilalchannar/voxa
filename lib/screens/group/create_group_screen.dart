@@ -26,6 +26,7 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   final TextEditingController _descController = TextEditingController();
 
   List<UserProfile> _allUsers = [];
+  Set<String> _contactUids = {};
   final Set<String> _selectedUids = {};
   bool _isLoadingUsers = true;
   bool _isCreating = false;
@@ -40,9 +41,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
   Future<void> _loadUsers() async {
     try {
       final users = await _firebaseService.getAllUsers();
+      final contacts = await _firebaseService.getContactUids();
       if (mounted) {
         setState(() {
           _allUsers = users;
+          _contactUids = contacts;
           _isLoadingUsers = false;
         });
       }
@@ -252,7 +255,11 @@ class _CreateGroupScreenState extends State<CreateGroupScreen> {
                             });
                           },
                           secondary: ProfileAvatar(
-                            photoUrl: user.photoUrl,
+                            photoUrl: user.canSeePhoto(
+                                    _firebaseService.currentUid,
+                                    viewerContacts: _contactUids)
+                                ? user.photoUrl
+                                : null,
                             initial: user.initial,
                             radius: 20,
                           ),
