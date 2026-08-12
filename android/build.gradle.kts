@@ -5,8 +5,6 @@ allprojects {
     }
 }
 
-
-
 val newBuildDir: Directory =
     rootProject.layout.buildDirectory
         .dir("../../build")
@@ -14,20 +12,24 @@ val newBuildDir: Directory =
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
+    val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
+    project.layout.buildDirectory.value(newSubprojectBuildDir)
+}
+
+subprojects {
     afterEvaluate {
         if (project.extensions.findByName("android") != null) {
             val android = project.extensions.getByName("android") as com.android.build.gradle.BaseExtension
             android.compileSdkVersion(36)
-            android.defaultConfig.minSdkVersion(23)
-            if (android.namespace == null) {
+            android.defaultConfig.minSdkVersion(24)
+            
+            // Fix Agora and other plugin namespace conflicts for AGP 8.0+
+            if (android.namespace == null || android.namespace == "io.agora.rtc") {
                 android.namespace = "com.plugin.${project.name.replace('-', '_')}"
             }
         }
     }
 }
-
-
-
 
 subprojects {
     project.evaluationDependsOn(":app")
@@ -36,6 +38,3 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
-
-
-

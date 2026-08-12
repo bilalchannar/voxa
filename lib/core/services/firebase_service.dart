@@ -144,16 +144,8 @@ class FirebaseService {
   }
 
   Future<List<UserProfile>> getAllUsers() async {
-    final uid = currentUid;
     final snapshot = await _firestore.collection('users').get();
-
-    final users = <UserProfile>[];
-    for (final doc in snapshot.docs) {
-      if (doc.id != uid) {
-        users.add(UserProfile.fromSnapshot(doc));
-      }
-    }
-    return users;
+    return snapshot.docs.map((doc) => UserProfile.fromSnapshot(doc)).toList();
   }
 
   Future<List<UserProfile>> searchUsers(String query) async {
@@ -189,19 +181,23 @@ class FirebaseService {
       final data = doc.data();
       final isGroup = data['type'] == 'group';
       final List participants = data['participants'] as List? ?? [];
-      if (!isGroup && participants.contains(targetUid)) {
-        return doc.id;
+      if (!isGroup) {
+        if (targetUid == uid && (participants.length == 1 || (participants.length == 2 && participants[0] == uid && participants[1] == uid))) {
+          return doc.id;
+        } else if (targetUid != uid && participants.length == 2 && participants.contains(targetUid)) {
+          return doc.id;
+        }
       }
     }
 
     final sorted = [uid, targetUid]..sort();
-    final customChatId = 'direct_${sorted.join('_')}';
+    final customChatId = targetUid == uid ? 'direct_${uid}_self' : 'direct_${sorted.join('_')}';
     final chatDocRef = _firestore.collection('chats').doc(customChatId);
     final snap = await chatDocRef.get();
 
     if (!snap.exists) {
       await chatDocRef.set({
-        'participants': [uid, targetUid],
+        'participants': targetUid == uid ? [uid] : [uid, targetUid],
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
         'lastMessage': '',

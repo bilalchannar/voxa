@@ -26,9 +26,10 @@ class SettingsService {
           .doc(docName);
 
   Stream<NotificationSettings> notificationsStream() {
-    return _settingsDoc(
-      'notifications',
-    ).snapshots().map((snap) => NotificationSettings.fromMap(snap.data()));
+    return _settingsDoc('notifications')
+        .snapshots()
+        .map((snap) => NotificationSettings.fromMap(snap.data()))
+        .handleError((_) => const NotificationSettings());
   }
 
   Future<NotificationSettings> getNotifications() async {
@@ -45,9 +46,10 @@ class SettingsService {
   }
 
   Stream<ChatSettings> chatsStream() {
-    return _settingsDoc(
-      'chats',
-    ).snapshots().map((snap) => ChatSettings.fromMap(snap.data()));
+    return _settingsDoc('chats')
+        .snapshots()
+        .map((snap) => ChatSettings.fromMap(snap.data()))
+        .handleError((_) => const ChatSettings());
   }
 
   Future<void> saveChats(ChatSettings settings) async {
@@ -55,9 +57,10 @@ class SettingsService {
   }
 
   Stream<StorageSettings> storageStream() {
-    return _settingsDoc(
-      'storage',
-    ).snapshots().map((snap) => StorageSettings.fromMap(snap.data()));
+    return _settingsDoc('storage')
+        .snapshots()
+        .map((snap) => StorageSettings.fromMap(snap.data()))
+        .handleError((_) => const StorageSettings());
   }
 
   Future<void> saveStorage(StorageSettings settings) async {

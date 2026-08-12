@@ -379,7 +379,7 @@ class _ChatScreenState extends State<ChatScreen> {
           fileSize = await file.length();
         }
       } else if (type == 'document') {
-        final result = await FilePicker.platform.pickFiles();
+        final result = await FilePicker.pickFiles();
         if (result != null && result.files.single.path != null) {
           file = File(result.files.single.path!);
           fileName = result.files.single.name;
@@ -527,6 +527,9 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   String _formatStatusSubtitle(bool isRecipientTyping) {
+    if (widget.recipient.uid == _viewModel.currentUid) {
+      return 'Message yourself';
+    }
     if (isRecipientTyping) return 'typing...';
 
     final privacy = widget.recipient.privacy;
@@ -618,14 +621,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     icon: const Icon(Icons.search),
                     onPressed: () => setState(() => _isSearching = true),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.videocam),
-                    onPressed: _startVideoCall,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.phone),
-                    onPressed: _startAudioCall,
-                  ),
+                  if (widget.recipient.uid != _viewModel.currentUid) ...[
+                    IconButton(
+                      icon: const Icon(Icons.videocam),
+                      onPressed: _startVideoCall,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.phone),
+                      onPressed: _startAudioCall,
+                    ),
+                  ],
                   PopupMenuButton<String>(
                     onSelected: (val) async {
                       if (val == 'media') {

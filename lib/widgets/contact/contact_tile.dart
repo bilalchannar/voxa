@@ -7,8 +7,14 @@ import '../profile/profile_avatar.dart';
 class ContactTile extends StatelessWidget {
   final UserProfile user;
   final VoidCallback onTap;
+  final bool isMe;
 
-  const ContactTile({super.key, required this.user, required this.onTap});
+  const ContactTile({
+    super.key,
+    required this.user,
+    required this.onTap,
+    this.isMe = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +44,13 @@ class ContactTile extends StatelessWidget {
         ],
       ),
       title: Text(
-        user.displayName,
+        isMe ? '${user.displayName} (You)' : user.displayName,
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       subtitle: Text(
-        user.phoneNumber.isNotEmpty ? user.phoneNumber : user.about,
+        isMe
+            ? 'Message yourself'
+            : (user.phoneNumber.isNotEmpty ? user.phoneNumber : user.about),
         style: const TextStyle(fontSize: 13.5, color: AppColors.secondaryText),
       ),
       trailing: const Icon(

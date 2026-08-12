@@ -91,12 +91,15 @@ class ProfileHeader extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              InkWell(
-                onTap: onEditProfile,
-                borderRadius: BorderRadius.circular(20),
-                child: const Padding(
-                  padding: EdgeInsets.all(4),
-                  child: Icon(Icons.edit, color: Colors.white70, size: 18),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: onEditProfile,
+                  borderRadius: BorderRadius.circular(20),
+                  child: const Padding(
+                    padding: EdgeInsets.all(4),
+                    child: Icon(Icons.edit, color: Colors.white70, size: 18),
+                  ),
                 ),
               ),
             ],

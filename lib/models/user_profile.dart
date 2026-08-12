@@ -82,6 +82,30 @@ class UserProfile {
     return photoUrl != null && photoUrl!.isNotEmpty;
   }
 
+  bool canSeeLastSeen([String? viewerUid]) {
+    if (viewerUid != null && viewerUid == uid) return true;
+    final setting = privacy['lastSeen'] as String? ?? 'everyone';
+    return setting != 'nobody';
+  }
+
+  bool canSeePhoto([String? viewerUid]) {
+    if (viewerUid != null && viewerUid == uid) return true;
+    final setting = privacy['profilePhoto'] as String? ?? 'everyone';
+    return setting != 'nobody';
+  }
+
+  bool canSeeAbout([String? viewerUid]) {
+    if (viewerUid != null && viewerUid == uid) return true;
+    final setting = privacy['about'] as String? ?? 'everyone';
+    return setting != 'nobody';
+  }
+
+  bool canSeeOnlineStatus([String? viewerUid]) {
+    if (viewerUid != null && viewerUid == uid) return true;
+    final setting = privacy['onlineStatus'] as String? ?? 'everyone';
+    return setting != 'nobody';
+  }
+
   static DateTime? _parseDate(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();

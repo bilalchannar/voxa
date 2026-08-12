@@ -18,6 +18,7 @@ class ContactsViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   String get searchQuery => _searchQuery;
+  String get currentUid => _firebaseService.currentUid;
   bool get isEmpty => !_isLoading && _errorMessage == null && _contacts.isEmpty;
 
   Future<void> loadContacts() async {
@@ -26,7 +27,29 @@ class ContactsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _contacts = await _firebaseService.searchUsers(_searchQuery);
+      final currentUid = _firebaseService.currentUid;
+      final results = await _firebaseService.searchUsers(_searchQuery);
+
+      // We want to show the current user at the top (Message Yourself)
+      // and others below. If results already contain current user, we re-order.
+      final List<UserProfile> sorted = [];
+      UserProfile? currentUser;
+
+      for (final u in results) {
+        if (u.uid == currentUid) {
+          currentUser = u;
+        } else {
+          sorted.add(u);
+        }
+      }
+
+      currentUser ??= await _firebaseService.getUserProfile();
+
+      if (currentUser != null) {
+        sorted.insert(0, currentUser);
+      }
+
+      _contacts = sorted;
     } catch (e) {
       debugPrint('[ContactsViewModel] loadContacts error: $e');
       _errorMessage = 'Could not load contacts. Please check connection.';

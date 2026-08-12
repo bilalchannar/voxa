@@ -9,7 +9,9 @@ import '../../widgets/chat/chat_filter_chip.dart';
 import '../../widgets/chat/chat_list_item.dart';
 
 class ChatsView extends StatefulWidget {
-  const ChatsView({super.key});
+  final String searchQuery;
+
+  const ChatsView({super.key, this.searchQuery = ''});
 
   @override
   State<ChatsView> createState() => _ChatsViewState();
@@ -200,6 +202,17 @@ class _ChatsViewState extends State<ChatsView> {
               final allChats = snapshot.data!;
 
               final filteredChats = allChats.where((chat) {
+                if (widget.searchQuery.isNotEmpty) {
+                  final isGroup = chat.isGroup;
+                  final otherUser = chat.otherUser;
+                  final name = isGroup
+                      ? (chat.groupName ?? 'Group')
+                      : (otherUser?.displayName ?? 'Voxa User');
+                  final q = widget.searchQuery.toLowerCase();
+                  final nameMatches = name.toLowerCase().contains(q);
+                  final msgMatches = chat.lastMessage.toLowerCase().contains(q);
+                  if (!nameMatches && !msgMatches) return false;
+                }
                 if (_selectedFilter == 'Unread') {
                   return chat.unreadCountFor(uid) > 0;
                 }

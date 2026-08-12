@@ -185,8 +185,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
                         const Divider(height: 1, indent: 72),
                     itemBuilder: (context, index) {
                       final user = _viewModel.contacts[index];
+                      final isMe = user.uid == _viewModel.currentUid;
                       return ContactTile(
                         user: user,
+                        isMe: isMe,
                         onTap: () => _handleSelectUser(user),
                       );
                     },

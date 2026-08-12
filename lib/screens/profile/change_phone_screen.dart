@@ -153,6 +153,34 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
+          'Select Country',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppColors.secondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          decoration: const BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppColors.secondary, width: 1.5),
+            ),
+          ),
+          child: CountryCodePicker(
+            onChanged: (c) {
+              if (c.dialCode != null) {
+                setState(() => _countryCode = c.dialCode!);
+              }
+            },
+            initialSelection: 'PK',
+            favorite: const ['+92', 'PK'],
+            showOnlyCountryWhenClosed: true,
+            alignLeft: true,
+          ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
           'New phone number',
           style: TextStyle(
             fontSize: 13,
@@ -165,17 +193,17 @@ class _ChangePhoneScreenState extends State<ChangePhoneScreen> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Container(
+              width: 80,
+              alignment: Alignment.center,
               decoration: const BoxDecoration(
                 border: Border(
                   bottom: BorderSide(color: AppColors.secondary, width: 1.5),
                 ),
               ),
-              child: CountryCodePicker(
-                onChanged: (c) => setState(() => _countryCode = c.dialCode!),
-                initialSelection: 'PK',
-                favorite: const ['+92', 'PK'],
-                showOnlyCountryWhenClosed: true,
-                alignLeft: true,
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                _countryCode,
+                style: const TextStyle(fontSize: 18),
               ),
             ),
             const SizedBox(width: 12),

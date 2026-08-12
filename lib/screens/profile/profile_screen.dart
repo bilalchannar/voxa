@@ -309,30 +309,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<UserProfile?>(
-      stream: _viewModel.profileStream(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return _ErrorState(
-            message: FirebaseErrorMapper.message(
-              snapshot.error!,
-              context: 'profileStream',
-            ),
-            onRetry: () => setState(() {}),
-          );
-        }
-
-        if (!snapshot.hasData) {
-          if (snapshot.connectionState == ConnectionState.active &&
-              snapshot.data == null) {
-            _ensureProfile();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+      ),
+      body: StreamBuilder<UserProfile?>(
+        stream: _viewModel.profileStream(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return _ErrorState(
+              message: FirebaseErrorMapper.message(
+                snapshot.error!,
+                context: 'profileStream',
+              ),
+              onRetry: () => setState(() {}),
+            );
           }
-          return const _LoadingState();
-        }
 
-        final profile = snapshot.data!;
-        return _buildContent(profile);
-      },
+          if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.active &&
+                snapshot.data == null) {
+              _ensureProfile();
+            }
+            return const _LoadingState();
+          }
+
+          final profile = snapshot.data!;
+          return _buildContent(profile);
+        },
+      ),
     );
   }
 
