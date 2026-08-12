@@ -140,54 +140,56 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         context: context,
         isScrollControlled: true,
         showDragHandle: true,
-        builder: (sheetContext) => SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Photo Captured',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 14),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(
-                    File(photo.path),
-                    height: 240,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+        builder: (sheetContext) => SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Photo Captured',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ListTile(
-                  leading: const Icon(Icons.send, color: AppColors.accent),
-                  title: const Text('Send to contact'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ContactsScreen(),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.account_circle, color: AppColors.secondary),
-                  title: const Text('Update Profile Photo'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const ProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      File(photo.path),
+                      height: 240,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.send, color: AppColors.accent),
+                    title: const Text('Send to contact'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ContactsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.account_circle, color: AppColors.secondary),
+                    title: const Text('Update Profile Photo'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ProfileScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -209,75 +211,77 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             bottom: MediaQuery.of(sheetContext).viewInsets.bottom,
           ),
           child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.campaign_outlined, color: AppColors.accent, size: 28),
-                      SizedBox(width: 12),
-                      Text(
-                        'New Broadcast',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Only contacts with your number in their address book will receive your broadcast messages.',
-                    style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: broadcastController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      hintText: 'Type broadcast message...',
-                      border: OutlineInputBorder(),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.campaign_outlined, color: AppColors.accent, size: 28),
+                        SizedBox(width: 12),
+                        Text(
+                          'New Broadcast',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final text = broadcastController.text.trim();
-                        if (text.isEmpty) return;
-                        Navigator.pop(sheetContext);
-                        try {
-                          final users = await _firebaseService.getAllUsers();
-                          for (final u in users) {
-                            final chatId = await _firebaseService.createOrGetChat(u.uid);
-                            await _firebaseService.sendMessage(
-                              conversationId: chatId,
-                              receiverId: u.uid,
-                              content: '[Broadcast] $text',
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Only contacts with your number in their address book will receive your broadcast messages.',
+                      style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: broadcastController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        hintText: 'Type broadcast message...',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final text = broadcastController.text.trim();
+                          if (text.isEmpty) return;
+                          Navigator.pop(sheetContext);
+                          try {
+                            final users = await _firebaseService.getAllUsers();
+                            for (final u in users) {
+                              final chatId = await _firebaseService.createOrGetChat(u.uid);
+                              await _firebaseService.sendMessage(
+                                conversationId: chatId,
+                                receiverId: u.uid,
+                                content: '[Broadcast] $text',
+                              );
+                            }
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Broadcast message sent!')),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Broadcast failed: $e')),
                             );
                           }
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Broadcast message sent!')),
-                          );
-                        } catch (e) {
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Broadcast failed: $e')),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: Colors.white,
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accent,
+                          foregroundColor: Colors.white,
+                        ),
+                        icon: const Icon(Icons.send),
+                        label: const Text('Send Broadcast'),
                       ),
-                      icon: const Icon(Icons.send),
-                      label: const Text('Send Broadcast'),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -289,57 +293,66 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _showLinkedDevicesModal() {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.devices, size: 54, color: AppColors.secondary),
-                const SizedBox(height: 12),
-                const Text(
-                  'Linked Devices',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Use Voxa on Web, Desktop, and other devices without keeping your phone online.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.secondaryText, fontSize: 13.5),
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.phone_android, color: AppColors.accent),
-                  title: const Text('Primary Device (This Phone)'),
-                  subtitle: const Text('Active now'),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.laptop, color: AppColors.secondaryText),
-                  title: const Text('Voxa Web / Desktop'),
-                  subtitle: const Text('Linked session ready'),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 46,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(sheetContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Device pairing ready. Scan QR code to link.')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: Colors.white,
-                    ),
-                    icon: const Icon(Icons.qr_code_scanner),
-                    label: const Text('Link a Device'),
+        return SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.devices, size: 48, color: AppColors.secondary),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Linked Devices',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Use Voxa on Web, Desktop, and other devices without keeping your phone online.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.phone_android, color: AppColors.accent),
+                    title: Text('Primary Device (This Phone)'),
+                    subtitle: Text('Active now'),
+                  ),
+                  const ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.laptop, color: AppColors.secondaryText),
+                    title: Text('Voxa Web / Desktop'),
+                    subtitle: Text('Linked session ready'),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Device pairing ready. Scan QR code to link.',
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accent,
+                        foregroundColor: Colors.white,
+                      ),
+                      icon: const Icon(Icons.qr_code_scanner),
+                      label: const Text('Link a Device'),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -353,40 +366,42 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(Icons.star, color: Colors.amber, size: 28),
-                    SizedBox(width: 10),
-                    Text(
-                      'Starred Messages',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Center(
-                  child: Column(
+        return SingleChildScrollView(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Row(
                     children: [
-                      SizedBox(height: 20),
-                      Icon(Icons.star_outline, size: 48, color: AppColors.secondaryText),
-                      SizedBox(height: 12),
+                      Icon(Icons.star, color: Colors.amber, size: 28),
+                      SizedBox(width: 10),
                       Text(
-                        'Tap and hold on any message in a chat to star it for easy access later.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: AppColors.secondaryText, fontSize: 13.5),
+                        'Starred Messages',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 20),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Column(
+                      children: [
+                        SizedBox(height: 20),
+                        Icon(Icons.star_outline, size: 48, color: AppColors.secondaryText),
+                        SizedBox(height: 12),
+                        Text(
+                          'Tap and hold on any message in a chat to star it for easy access later.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: AppColors.secondaryText, fontSize: 13.5),
+                        ),
+                        SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -172,43 +172,19 @@ class FirebaseService {
   Future<String> createOrGetChat(String targetUid) async {
     final uid = currentUid;
 
-    final existing = await _firestore
-        .collection('chats')
-        .where('participants', arrayContains: uid)
-        .get();
-
-    for (final doc in existing.docs) {
-      final data = doc.data();
-      final isGroup = data['type'] == 'group';
-      final List participants = data['participants'] as List? ?? [];
-      if (!isGroup) {
-        if (targetUid == uid && (participants.length == 1 || (participants.length == 2 && participants[0] == uid && participants[1] == uid))) {
-          return doc.id;
-        } else if (targetUid != uid && participants.length == 2 && participants.contains(targetUid)) {
-          return doc.id;
-        }
-      }
-    }
-
     final sorted = [uid, targetUid]..sort();
-    final customChatId = targetUid == uid ? 'direct_${uid}_self' : 'direct_${sorted.join('_')}';
+    final customChatId =
+        targetUid == uid ? 'direct_${uid}_self' : 'direct_${sorted.join('_')}';
     final chatDocRef = _firestore.collection('chats').doc(customChatId);
-    final snap = await chatDocRef.get();
 
-    if (!snap.exists) {
+    try {
       await chatDocRef.set({
         'participants': targetUid == uid ? [uid] : [uid, targetUid],
-        'createdAt': FieldValue.serverTimestamp(),
+        'type': 'direct',
         'updatedAt': FieldValue.serverTimestamp(),
-        'lastMessage': '',
-        'lastMessageType': 'text',
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        'pinnedBy': [],
-        'mutedBy': [],
-        'archivedBy': [],
-        'unreadCounts': {},
-        'typingUsers': {},
       }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[FirebaseService] createOrGetChat set error: $e');
     }
 
     return customChatId;

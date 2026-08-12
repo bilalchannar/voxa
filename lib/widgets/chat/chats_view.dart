@@ -48,12 +48,14 @@ class _ChatsViewState extends State<ChatsView> {
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               ListTile(
                 leading: Icon(
                   isPinned ? Icons.push_pin_outlined : Icons.push_pin,
@@ -107,8 +109,9 @@ class _ChatsViewState extends State<ChatsView> {
               const SizedBox(height: 8),
             ],
           ),
-        );
-      },
+        ),
+      );
+    },
     );
   }
 
