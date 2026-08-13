@@ -98,6 +98,12 @@ service cloud.firestore {
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid;
     }
 
+    // ---- Collection Groups -------------------------------------------------
+    // Required for the 'Starred Messages' feature to fetch messages across chats.
+    match /{path=**}/messages/{messageId} {
+      allow read: if isSignedIn() && request.auth.uid in resource.data.starredBy;
+    }
+
     // Everything else is denied by default
   }
 }

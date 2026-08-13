@@ -27,9 +27,9 @@
     },
     {
       "collectionGroup": "messages",
-      "queryScope": "GROUP",
+      "queryScope": "COLLECTION_GROUP",
       "fields": [
-        { "fieldPath": "starredBy", "order": "ARRAY_CONTAINS" },
+        { "fieldPath": "starredBy", "arrayConfig": "CONTAINS" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
