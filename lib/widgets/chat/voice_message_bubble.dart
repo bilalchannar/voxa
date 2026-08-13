@@ -40,28 +40,29 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   }
 
   void _initAudioListeners() {
-    _stateSub = _audioService.player.onPlayerStateChanged.listen((state) {
+    final url = widget.message.mediaUrl;
+    if (url == null || url.isEmpty) return;
+
+    _stateSub = _audioService.stateStreamFor(url).listen((state) {
       if (!mounted) return;
-      final isCurrentUrl =
-          _audioService.currentlyPlayingUrl == widget.message.mediaUrl;
-      setState(() {
-        _playerState = isCurrentUrl ? state : PlayerState.stopped;
-      });
+      setState(() => _playerState = state);
     });
 
-    _positionSub = _audioService.player.onPositionChanged.listen((pos) {
+    _positionSub = _audioService.positionStreamFor(url).listen((pos) {
       if (!mounted) return;
-      if (_audioService.currentlyPlayingUrl == widget.message.mediaUrl) {
-        setState(() => _position = pos);
-      }
+      setState(() => _position = pos);
     });
 
-    _durationSub = _audioService.player.onDurationChanged.listen((dur) {
+    _durationSub = _audioService.durationStreamFor(url).listen((dur) {
       if (!mounted) return;
-      if (_audioService.currentlyPlayingUrl == widget.message.mediaUrl) {
-        setState(() => _duration = dur);
-      }
+      setState(() => _duration = dur);
     });
+    
+    // Initial sync if this is already playing
+    if (_audioService.currentlyPlayingUrl == url) {
+      // Logic to fetch current duration/position from service if needed,
+      // but usually the stream will emit soon.
+    }
   }
 
   @override

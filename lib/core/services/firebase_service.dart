@@ -243,6 +243,30 @@ class FirebaseService {
         .snapshots()
         .asyncMap((snapshot) async {
           final conversations = <Conversation>[];
+          final List<String> uidsToFetch = [];
+
+          // First pass: identify missing profiles
+          for (final doc in snapshot.docs) {
+            final data = doc.data();
+            final participants = (data['participants'] as List?)?.cast<String>() ?? [];
+            final otherUid = participants.firstWhere((id) => id != uid, orElse: () => uid);
+            
+            if (otherUid != uid && !_userProfileCache.containsKey(otherUid)) {
+              uidsToFetch.add(otherUid);
+            }
+          }
+
+          // Fetch missing profiles in batches if possible (though users collection fetch is usually fine)
+          if (uidsToFetch.isNotEmpty) {
+            // For small numbers, individual gets are okay if they happen once.
+            // For larger scales, a 'where in' query would be better.
+            await Future.wait(uidsToFetch.map((id) async {
+              final userSnap = await _userDoc(id).get();
+              if (userSnap.exists) {
+                _userProfileCache[id] = UserProfile.fromSnapshot(userSnap);
+              }
+            }));
+          }
 
           for (final doc in snapshot.docs) {
             final conversation = Conversation.fromSnapshot(doc);
@@ -251,20 +275,9 @@ class FirebaseService {
               orElse: () => uid,
             );
 
-            UserProfile? otherUser;
-            if (otherUid != uid) {
-              if (_userProfileCache.containsKey(otherUid)) {
-                otherUser = _userProfileCache[otherUid];
-              } else {
-                final userSnap = await _userDoc(otherUid).get();
-                if (userSnap.exists) {
-                  otherUser = UserProfile.fromSnapshot(userSnap);
-                  _userProfileCache[otherUid] = otherUser;
-                }
-              }
-            }
-
-            conversations.add(conversation.copyWith(otherUser: otherUser));
+            conversations.add(conversation.copyWith(
+              otherUser: otherUid == uid ? null : _userProfileCache[otherUid],
+            ));
           }
 
           conversations.sort((a, b) {

@@ -157,7 +157,10 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OTPScreen(verificationId: verificationId),
+            builder: (context) => OTPScreen(
+              verificationId: verificationId,
+              phoneNumber: "$_countryCode$cleanNumber",
+            ),
           ),
         );
       },

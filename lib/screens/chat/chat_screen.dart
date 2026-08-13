@@ -96,14 +96,33 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  int _lastMessageCount = 0;
+
+  void _scrollToBottom({bool force = false}) {
     if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent + 60,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
+      final pos = _scrollController.position;
+      // Only scroll if we are already near the bottom or forced (e.g. after sending)
+      final isNearBottom = pos.pixels > (pos.maxScrollExtent - 200);
+      
+      if (force || isNearBottom) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent + 100,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
     }
+  }
+
+  void _handleMessageListUpdate(List<Message> messages) {
+    if (messages.length > _lastMessageCount) {
+      // New messages arrived
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _scrollToBottom();
+        _viewModel.markMessagesAsSeen();
+      });
+    }
+    _lastMessageCount = messages.length;
   }
 
   Future<void> _handleSendText() async {
@@ -139,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
 
     if (success) {
-      _scrollToBottom();
+      _scrollToBottom(force: true);
     }
   }
 
@@ -530,7 +549,7 @@ class _ChatScreenState extends State<ChatScreen> {
     if (!mounted) return;
 
     if (success) {
-      _scrollToBottom();
+      _scrollToBottom(force: true);
     } else {
       final err = _viewModel.uploadError ?? 'Failed to send media.';
       VoxaSnackBar.error(context, err);
@@ -892,6 +911,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             }
 
                             var messages = snapshot.data!;
+                            
+                            // Handle scrolling and side-effects logic safely
+                            _handleMessageListUpdate(messages);
+
                             if (_searchQuery.isNotEmpty) {
                               messages = messages
                                   .where(
@@ -927,11 +950,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               );
                             }
-
-                            _viewModel.markMessagesAsSeen();
-                            WidgetsBinding.instance.addPostFrameCallback(
-                              (_) => _scrollToBottom(),
-                            );
 
                             return ListView.builder(
                               controller: _scrollController,

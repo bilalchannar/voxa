@@ -39,7 +39,7 @@ class CallService {
         receiverId: receiver.uid,
         receiverName: receiver.displayName,
         receiverPhoto: receiver.photoUrl,
-        channelId: 'test', // TEMPORARY: Hardcoded for token testing
+        channelId: docRef.id, // Use call document ID as unique channel
         status: 'dialing',
         isVideoCall: isVideoCall,
         timestamp: DateTime.now(),

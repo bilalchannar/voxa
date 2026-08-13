@@ -19,8 +19,23 @@ class AudioService {
   String? _currentRecordingPath;
   String? _currentlyPlayingUrl;
 
+  // Streams for global UI sync
+  Stream<PlayerState> get onPlayerStateChanged => _player.onPlayerStateChanged;
+  Stream<Duration> get onPositionChanged => _player.onPositionChanged;
+  Stream<Duration> get onDurationChanged => _player.onDurationChanged;
+
+  /// Emits events only when the active URL matches the provided [url].
+  /// This prevents 100s of bubbles from processing irrelevant stream events.
+  Stream<PlayerState> stateStreamFor(String url) => 
+      onPlayerStateChanged.where((_) => _currentlyPlayingUrl == url);
+      
+  Stream<Duration> positionStreamFor(String url) => 
+      onPositionChanged.where((_) => _currentlyPlayingUrl == url);
+
+  Stream<Duration> durationStreamFor(String url) => 
+      onDurationChanged.where((_) => _currentlyPlayingUrl == url);
+
   bool get isRecording => _isRecording;
-  AudioPlayer get player => _player;
   String? get currentlyPlayingUrl => _currentlyPlayingUrl;
 
   Future<bool> hasPermission() async {

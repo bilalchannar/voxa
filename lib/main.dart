@@ -18,15 +18,19 @@ void main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  NotificationService.instance.setNavigatorKey(navigatorKey);
-  await NotificationService.instance.init();
-
   final isSignedIn = FirebaseAuth.instance.currentUser != null;
 
   runApp(MyApp(isSignedIn: isSignedIn));
-  
-  // Remove splash screen after app is ready
-  FlutterNativeSplash.remove();
+
+  // Initialize heavy services in the background to avoid blocking the main thread
+  // and causing "detached from native C++" errors.
+  NotificationService.instance.setNavigatorKey(navigatorKey);
+  NotificationService.instance.init().then((_) {
+    FlutterNativeSplash.remove();
+  }).catchError((e) {
+    debugPrint('Notification init failed: $e');
+    FlutterNativeSplash.remove();
+  });
 }
 
 class MyApp extends StatelessWidget {

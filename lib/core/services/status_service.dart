@@ -42,20 +42,15 @@ class StatusService {
   }
 
   Stream<List<StatusModel>> getStatuses() {
+    final twentyFourHoursAgo = DateTime.now().subtract(const Duration(hours: 24));
+    
     return _firestore
         .collection('status')
+        .where('timestamp', isGreaterThan: twentyFourHoursAgo)
         .orderBy('timestamp', descending: true)
         .snapshots(includeMetadataChanges: true)
         .map((snap) {
-      final now = DateTime.now();
-      final twentyFourHoursAgo = now.subtract(const Duration(hours: 24));
-
-      return snap.docs.map((doc) {
-        return StatusModel.fromSnapshot(doc);
-      }).where((status) {
-        // If timestamp is null (pending write), treat it as recent
-        return status.timestamp.isAfter(twentyFourHoursAgo);
-      }).toList();
+      return snap.docs.map((doc) => StatusModel.fromSnapshot(doc)).toList();
     });
   }
 
