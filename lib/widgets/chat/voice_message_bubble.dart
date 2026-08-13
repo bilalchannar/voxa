@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/services/audio_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/media_loader.dart';
 import '../../models/message.dart';
 
 class VoiceMessageBubble extends StatefulWidget {
@@ -29,6 +30,9 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   Duration _position = Duration.zero;
   double _speed = 1.0;
 
+  bool _manualDownload = false;
+  bool? _shouldAutoDownload;
+
   StreamSubscription? _stateSub;
   StreamSubscription? _positionSub;
   StreamSubscription? _durationSub;
@@ -36,7 +40,15 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
   @override
   void initState() {
     super.initState();
+    _checkAutoDownload();
     _initAudioListeners();
+  }
+
+  Future<void> _checkAutoDownload() async {
+    final result = await MediaLoader.shouldAutoDownload('voice');
+    if (mounted) {
+      setState(() => _shouldAutoDownload = result);
+    }
   }
 
   void _initAudioListeners() {
@@ -117,6 +129,37 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
 
   @override
   Widget build(BuildContext context) {
+    final isAllowed = (_shouldAutoDownload ?? true) || _manualDownload || widget.isMe;
+
+    if (!isAllowed) {
+      return InkWell(
+        onTap: () => setState(() => _manualDownload = true),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          width: 230,
+          child: Row(
+            children: [
+              const Icon(Icons.mic, color: AppColors.secondaryText),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Voice message',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Tap to download (${_formatFileSize(widget.message.fileSize)})',
+                    style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final isPlaying =
         _playerState == PlayerState.playing &&
         _audioService.currentlyPlayingUrl == widget.message.mediaUrl;
@@ -208,5 +251,12 @@ class _VoiceMessageBubbleState extends State<VoiceMessageBubble> {
         ],
       ),
     );
+  }
+
+  String _formatFileSize(int? bytes) {
+    if (bytes == null || bytes == 0) return '0 B';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 }

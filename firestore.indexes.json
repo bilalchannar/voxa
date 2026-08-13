@@ -24,6 +24,14 @@
         { "fieldPath": "receiverId", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "messages",
+      "queryScope": "GROUP",
+      "fields": [
+        { "fieldPath": "starredBy", "order": "ARRAY_CONTAINS" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

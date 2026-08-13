@@ -76,6 +76,15 @@ class SettingsService {
     await _settingsDoc('storage').set(settings.toMap());
   }
 
+  Future<StorageSettings> getStorage() async {
+    try {
+      final snap = await _settingsDoc('storage').get();
+      return StorageSettings.fromMap(snap.data());
+    } catch (_) {
+      return const StorageSettings();
+    }
+  }
+
   Future<String?> loadThemeMode() async {
     final snap = await _settingsDoc('appearance').get();
     return snap.data()?['themeMode'] as String?;

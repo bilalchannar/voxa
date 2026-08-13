@@ -9,6 +9,8 @@ import 'package:voxa/core/theme/app_colors.dart';
 import 'package:voxa/core/theme/theme_controller.dart';
 import 'package:voxa/models/call_model.dart';
 import 'package:voxa/screens/call/call_screen.dart';
+import 'package:voxa/screens/profile/linked_devices_screen.dart';
+import 'package:voxa/screens/chat/starred_messages_screen.dart';
 import 'package:voxa/screens/contacts/contacts_screen.dart';
 import 'package:voxa/screens/group/create_group_screen.dart';
 import 'package:voxa/screens/profile/profile_screen.dart';
@@ -295,77 +297,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showLinkedDevicesModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return SingleChildScrollView(
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.devices, size: 48, color: AppColors.secondary),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Linked Devices',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Use Voxa on Web, Desktop, and other devices without keeping your phone online.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
-                  ),
-                  const SizedBox(height: 12),
-                  const ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.phone_android, color: AppColors.accent),
-                    title: Text('Primary Device (This Phone)'),
-                    subtitle: Text('Active now'),
-                  ),
-                  const ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.laptop, color: AppColors.secondaryText),
-                    title: Text('Voxa Web / Desktop'),
-                    subtitle: Text('Linked session ready'),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(sheetContext);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Device pairing ready. Scan QR code to link.',
-                            ),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        foregroundColor: Colors.white,
-                      ),
-                      icon: const Icon(Icons.qr_code_scanner),
-                      label: const Text('Link a Device'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LinkedDevicesScreen()),
     );
   }
 
   void _showStarredMessagesModal() {
-    // ... existing implementation ...
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StarredMessagesScreen()),
+    );
   }
 
   Future<void> _pickAndUploadStatus({bool isVideo = false}) async {

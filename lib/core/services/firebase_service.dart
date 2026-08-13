@@ -742,4 +742,15 @@ class FirebaseService {
       'unreadCounts.$uid': 1,
     });
   }
+
+  Stream<List<Message>> starredMessagesStream() {
+    final uid = currentUid;
+    return _firestore
+        .collectionGroup('messages')
+        .where('starredBy', arrayContains: uid)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) => Message.fromSnapshot(doc)).toList();
+        });
+  }
 }

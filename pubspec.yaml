@@ -56,6 +56,7 @@ dependencies:
   # Chat media: save received images/videos to the device gallery. Gated by the
   # "Media visibility" chat setting (on = save to gallery, off = app-private).
   gal: ^2.3.3
+  connectivity_plus: ^6.0.3
 
 
 

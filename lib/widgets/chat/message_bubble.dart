@@ -4,11 +4,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/services/media_saver_service.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/utils/media_loader.dart';
 import '../../models/message.dart';
 import '../../screens/chat/video_player_screen.dart';
 import 'voice_message_bubble.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final Message message;
   final bool isMe;
   final String currentUid;
@@ -27,6 +28,27 @@ class MessageBubble extends StatelessWidget {
     this.onTap,
     this.onLongPress,
   });
+
+  @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble> {
+  bool _manualDownload = false;
+  bool? _shouldAutoDownload;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoDownload();
+  }
+
+  Future<void> _checkAutoDownload() async {
+    final result = await MediaLoader.shouldAutoDownload(widget.message.type);
+    if (mounted) {
+      setState(() => _shouldAutoDownload = result);
+    }
+  }
 
   String _formatTime(DateTime? date) {
     if (date == null) return '';
@@ -147,7 +169,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildReplySnippet() {
-    if (message.replyToText == null || message.replyToText!.isEmpty) {
+    if (widget.message.replyToText == null || widget.message.replyToText!.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -165,7 +187,7 @@ class MessageBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            message.replyToSender ?? 'Reply',
+            widget.message.replyToSender ?? 'Reply',
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -174,7 +196,7 @@ class MessageBubble extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            message.replyToText!,
+            widget.message.replyToText!,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
@@ -188,9 +210,9 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildReactions() {
-    if (message.reactions.isEmpty) return const SizedBox.shrink();
+    if (widget.message.reactions.isEmpty) return const SizedBox.shrink();
 
-    final reactionList = message.reactions.values.toSet().toList();
+    final reactionList = widget.message.reactions.values.toSet().toList();
 
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -211,7 +233,7 @@ class MessageBubble extends StatelessWidget {
   }
 
   Widget _buildMediaContent(BuildContext context) {
-    if (message.isDeleted) {
+    if (widget.message.isDeleted) {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -224,18 +246,23 @@ class MessageBubble extends StatelessWidget {
           Text(
             'This message was deleted',
             style: TextStyle(
-              fontSize: fontSize - 1,
+              fontSize: widget.fontSize - 1,
               fontStyle: FontStyle.italic,
-              color: isMe ? Colors.white70 : AppColors.secondaryText,
+              color: widget.isMe ? Colors.white70 : AppColors.secondaryText,
             ),
           ),
         ],
       );
     }
 
-    final mediaUrl = message.mediaUrl ?? '';
+    final mediaUrl = widget.message.mediaUrl ?? '';
+    final isAllowed = (_shouldAutoDownload ?? true) || _manualDownload || widget.isMe;
 
-    switch (message.type) {
+    if (!isAllowed && widget.message.type != 'text') {
+       return _buildDownloadPlaceholder(widget.message.type);
+    }
+
+    switch (widget.message.type) {
       case 'image':
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,12 +304,12 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-            if (message.content.isNotEmpty &&
-                message.content != '📷 Photo') ...[
+            if (widget.message.content.isNotEmpty &&
+                widget.message.content != '📷 Photo') ...[
               const SizedBox(height: 6),
               Text(
-                message.content,
-                style: TextStyle(fontSize: fontSize - 1),
+                widget.message.content,
+                style: TextStyle(fontSize: widget.fontSize - 1),
               ),
             ],
           ],
@@ -299,9 +326,9 @@ class MessageBubble extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => VideoPlayerScreen(
                       url: mediaUrl,
-                      title: message.content.isNotEmpty &&
-                              message.content != '🎥 Video'
-                          ? message.content
+                      title: widget.message.content.isNotEmpty &&
+                              widget.message.content != '🎥 Video'
+                          ? widget.message.content
                           : 'Video',
                     ),
                   ),
@@ -348,12 +375,12 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
-            if (message.content.isNotEmpty &&
-                message.content != '🎥 Video') ...[
+            if (widget.message.content.isNotEmpty &&
+                widget.message.content != '🎥 Video') ...[
               const SizedBox(height: 6),
               Text(
-                message.content,
-                style: TextStyle(fontSize: fontSize - 1),
+                widget.message.content,
+                style: TextStyle(fontSize: widget.fontSize - 1),
               ),
             ],
           ],
@@ -365,7 +392,7 @@ class MessageBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: isMe
+              color: widget.isMe
                   ? Colors.black12
                   : AppColors.secondary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
@@ -384,17 +411,17 @@ class MessageBubble extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        message.fileName ?? 'Document',
+                        widget.message.fileName ?? 'Document',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: fontSize - 1,
+                          fontSize: widget.fontSize - 1,
                         ),
                       ),
-                      if (message.fileSize != null)
+                      if (widget.message.fileSize != null)
                         Text(
-                          _formatFileSize(message.fileSize),
+                          _formatFileSize(widget.message.fileSize),
                           style: const TextStyle(
                             fontSize: 11,
                             color: AppColors.secondaryText,
@@ -415,40 +442,74 @@ class MessageBubble extends StatelessWidget {
         );
 
       case 'voice':
-        return VoiceMessageBubble(message: message, isMe: isMe);
+        return VoiceMessageBubble(message: widget.message, isMe: widget.isMe);
 
       default:
         return Text(
-          message.content,
-          style: TextStyle(fontSize: fontSize, height: 1.3),
+          widget.message.content,
+          style: TextStyle(fontSize: widget.fontSize, height: 1.3),
         );
     }
   }
 
+  Widget _buildDownloadPlaceholder(String type) {
+    final icon = type == 'image' 
+        ? Icons.image 
+        : (type == 'video' ? Icons.videocam : Icons.insert_drive_file);
+    
+    return InkWell(
+      onTap: () => setState(() => _manualDownload = true),
+      child: Container(
+        width: 220,
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: AppColors.secondaryText),
+            const SizedBox(height: 8),
+            const Text(
+              'Tap to download',
+              style: TextStyle(fontSize: 12, color: AppColors.secondaryText),
+            ),
+            if (widget.message.fileSize != null)
+              Text(
+                _formatFileSize(widget.message.fileSize),
+                style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (message.isDeletedFor(currentUid)) {
+    if (widget.message.isDeletedFor(widget.currentUid)) {
       return const SizedBox.shrink();
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bubbleColor = isSelected
+    final bubbleColor = widget.isSelected
         ? AppColors.accent.withValues(alpha: 0.3)
-        : (isMe
+        : (widget.isMe
               ? (isDark ? AppColors.secondary : const Color(0xFFDCF8C6))
               : (isDark ? AppColors.darkElevated : Colors.white));
 
-    final textColor = isMe
+    final textColor = widget.isMe
         ? (isDark ? Colors.white : AppColors.primaryText)
         : (isDark ? Colors.white : AppColors.primaryText);
 
-    final isStarred = message.isStarredBy(currentUid);
+    final isStarred = widget.message.isStarredBy(widget.currentUid);
 
     return InkWell(
-      onTap: onTap,
-      onLongPress: onLongPress,
+      onTap: widget.onTap,
+      onLongPress: widget.onLongPress,
       child: Align(
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        alignment: widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -460,10 +521,10 @@ class MessageBubble extends StatelessWidget {
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(12),
               topRight: const Radius.circular(12),
-              bottomLeft: isMe
+              bottomLeft: widget.isMe
                   ? const Radius.circular(12)
                   : const Radius.circular(2),
-              bottomRight: isMe
+              bottomRight: widget.isMe
                   ? const Radius.circular(2)
                   : const Radius.circular(12),
             ),
@@ -477,7 +538,7 @@ class MessageBubble extends StatelessWidget {
           ),
           child: Column(
             crossAxisAlignment:
-                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                widget.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildReplySnippet(),
@@ -485,12 +546,12 @@ class MessageBubble extends StatelessWidget {
                 style: TextStyle(color: textColor),
                 child: _buildMediaContent(context),
               ),
-              if (!message.isDeleted) _buildReactions(),
+              if (!widget.message.isDeleted) _buildReactions(),
               const SizedBox(height: 4),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (message.isEdited && !message.isDeleted) ...[
+                  if (widget.message.isEdited && !widget.message.isDeleted) ...[
                     const Text(
                       'edited ',
                       style: TextStyle(
@@ -500,22 +561,22 @@ class MessageBubble extends StatelessWidget {
                       ),
                     ),
                   ],
-                  if (isStarred && !message.isDeleted) ...[
+                  if (isStarred && !widget.message.isDeleted) ...[
                     const Icon(Icons.star, size: 12, color: Colors.amber),
                     const SizedBox(width: 4),
                   ],
                   Text(
-                    _formatTime(message.createdAt),
+                    _formatTime(widget.message.createdAt),
                     style: TextStyle(
-                      color: isMe
+                      color: widget.isMe
                           ? (isDark ? Colors.white70 : AppColors.secondaryText)
                           : AppColors.secondaryText,
                       fontSize: 11,
                     ),
                   ),
-                  if (isMe && !message.isDeleted) ...[
+                  if (widget.isMe && !widget.message.isDeleted) ...[
                     const SizedBox(width: 4),
-                    if (message.isPending)
+                    if (widget.message.isPending)
                       const Icon(
                         Icons.access_time,
                         size: 13,
@@ -523,9 +584,9 @@ class MessageBubble extends StatelessWidget {
                       )
                     else
                       Icon(
-                        message.status == 'seen' ? Icons.done_all : Icons.done,
+                        widget.message.status == 'seen' ? Icons.done_all : Icons.done,
                         size: 15,
-                        color: message.status == 'seen'
+                        color: widget.message.status == 'seen'
                             ? Colors.blue
                             : AppColors.secondaryText,
                       ),
